@@ -6,14 +6,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <ros/ros.h>
 
 // type definitions
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
-
-// Param manager
-#include "param_manager_cpp/param_manager.hpp"
-#include "param_manager_cpp/param_manager_base.hpp"
 
 namespace tam::core::ssa
 {
@@ -240,11 +237,11 @@ public:
 
   // Output
   /**
-   * @brief returns a pointer to the param manager composer
+   * @brief returns a pointer to the ros node handle
    *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                  - ros::NodeHandle
    */
-  virtual std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler() = 0;
+  virtual ros::NodeHandle get_param_handler() = 0;
 
   /**
    * @brief returns the odometry output predicted by the ssa estimation
