@@ -2,167 +2,43 @@
 Changelog for package robot_state_publisher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-3.4.0 (2024-04-26)
-------------------
-
-3.3.3 (2024-01-24)
-------------------
-* Fix reload after a description with a mimic joint (`#212 <https://github.com/ros/robot_state_publisher/issues/212>`_)
-* Contributors: Guillaume Doisy
-
-3.3.2 (2023-11-06)
-------------------
-* Remove ament_target_dependencies. (`#209 <https://github.com/ros/robot_state_publisher/issues/209>`_)
-* Contributors: Chris Lalancette
-
-3.3.1 (2023-06-07)
-------------------
-* Improve log messages (`#206 <https://github.com/ros/robot_state_publisher/issues/206>`_)
-* Contributors: Nick Lamprianidis
-
-3.3.0 (2023-04-28)
-------------------
-
-3.2.0 (2023-04-11)
-------------------
-* Update robot_state_publisher to C++17. (`#204 <https://github.com/ros/robot_state_publisher/issues/204>`_)
-* Contributors: Chris Lalancette
-
-3.1.2 (2023-02-13)
-------------------
-* [rolling] Update maintainers - 2022-11-07 (`#203 <https://github.com/ros/robot_state_publisher/issues/203>`_)
-* Contributors: Audrow Nash
-
-3.1.1 (2022-09-13)
-------------------
-* Mirror rolling to ros2
-* Contributors: Audrow Nash
-
-3.1.0 (2022-05-10)
-------------------
-
-3.0.2 (2022-04-05)
-------------------
-* Depend on orocos_kdl_vendor (`#191 <https://github.com/ros/robot_state_publisher/issues/191>`_)
-* Contributors: Jacob Perron
-
-3.0.1 (2022-03-28)
-------------------
-* export dependencies, to use robot_state_publisher as a component (`#193 <https://github.com/ros/robot_state_publisher/issues/193>`_)
-* Contributors: Kenji Brameld
-
-3.0.0 (2022-01-14)
-------------------
-* Fix include order for cpplint (`#186 <https://github.com/ros/robot_state_publisher/issues/186>`_)
-* Change how parameter updates are handled (`#180 <https://github.com/ros/robot_state_publisher/issues/180>`_)
-* Install includes to instal/${PROJECT_NAME} (`#184 <https://github.com/ros/robot_state_publisher/issues/184>`_)
-* Make the change_fixed_joint test more robust (`#183 <https://github.com/ros/robot_state_publisher/issues/183>`_)
-* Add in a test to make sure fixed transforms change on update
-* Small C++ nice-isms in the tests
-* Switch to using target_include_directories for tests
-* Publish new fixed transforms when URDF is updated
-* Make joint_states subscription QoS configurable; default to SensorDataQoS (`#179 <https://github.com/ros/robot_state_publisher/issues/179>`_)
-* Remove dependency on urdfdom_headers (`#168 <https://github.com/ros/robot_state_publisher/issues/168>`_)
-* Contributors: Anthony Deschamps, Chris Lalancette, Jacob Perron, Russell Joyce, Shane Loretz
-
-2.7.0 (2021-10-18)
-------------------
-* Fix deprecated subscriber callbacks (`#173 <https://github.com/ros/robot_state_publisher/issues/173>`_)
-* Contributors: Abrar Rahman Protyasha
-
-2.6.0 (2021-08-02)
-------------------
-* Cleanup the documentation in the RobotStatePublisher class. (`#172 <https://github.com/ros/robot_state_publisher/issues/172>`_)
-* Always publish fixed frames to /tf_static (`#158 <https://github.com/ros/robot_state_publisher/issues/158>`_)
-* corrected publish_frequency default in README (`#166 <https://github.com/ros/robot_state_publisher/issues/166>`_)
-* Contributors: Chris Lalancette, Jacob Perron, Nils Schulte
-
-2.5.0 (2021-06-11)
-------------------
-* Add tf frame_prefix parameter (`#159 <https://github.com/ros/robot_state_publisher/issues/159>`_)
-* Contributors: Steve Nogar, Chris Lalancette
-
-2.4.3 (2021-04-19)
-------------------
-* Stop rejecting unknown parameters. (`#161 <https://github.com/ros/robot_state_publisher/issues/161>`_)
-* Contributors: Chris Lalancette
-
-2.4.2 (2021-01-25)
-------------------
-* clean up license to be standard bsd 3 clause (`#130 <https://github.com/ros/robot_state_publisher/issues/130>`_)
-* Update the maintainers. (`#151 <https://github.com/ros/robot_state_publisher/issues/151>`_)
-* Contributors: Chris Lalancette, Tully Foote
-
-2.4.1 (2020-09-28)
-------------------
-* fix types in range loops to avoid copy due to different type (`#143 <https://github.com/ros/robot_state_publisher/issues/143>`_)
-* Make sure not to crash on an invalid URDF. (`#141 <https://github.com/ros/robot_state_publisher/issues/141>`_)
-* Contributors: Chris Lalancette, Dirk Thomas
-
-2.4.0 (2020-04-30)
-------------------
-* Replace deprecated launch_ros usage (`#137 <https://github.com/ros/robot_state_publisher/issues/137>`_)
-* code style only: wrap after open parenthesis if not in one line (`#129 <https://github.com/ros/robot_state_publisher/issues/129>`_)
-* Refactor the ROS 2 code to be more modern (`#126 <https://github.com/ros/robot_state_publisher/issues/126>`_)
-* Switch to using TARGET_FILE to find the binary targets on Windows.
-* Fix tests on Windows.
-* Make the error message much nicer on Windows.
-* robot_state_publisher_node -> robot_state_publisher
-* Fix test build on Windows.
-* Get rid of redundant declaration.
-* Guard against negative publish_frequencies.
-* Switch to modern launch_testing ReadyToTest.
-* Add testing to robot_state_publisher.
-* Update some example launch files.
-* Implement the ability to change the parameters on the fly.
-* Fix silly bug while computing the publish interval.
-* Refactor to have a "setup" function during the constructor and later on during the parameter setup.
-* Mark things as explicit and final.
-* Update the documentation.
-* Make robot_state_publisher composable.
-* Contributors: Chris Lalancette, Dirk Thomas, Jacob Perron
-
-2.3.1 (2019-10-23)
-------------------
-* Switch the license back to BSD. (`#121 <https://github.com/ros/robot_state_publisher/issues/121>`_)
-* Contributors: Chris Lalancette
-
-2.3.0 (2019-09-26)
-------------------
-* Install include directories (`#31 <https://github.com/ros2/robot_state_publisher/issues/31>`_)
-* Publish URDF string on startup (`#24 <https://github.com/ros2/robot_state_publisher/issues/24>`_)
-* Contributors: Patrick Beeson, Poh Zhi-Ee, Shane Loretz
-
-2.2.4 (2019-09-06)
-------------------
-* Remove unused Eigen3 dependency (`#27 <https://github.com/ros2/robot_state_publisher/issues/27>`_) (`#29 <https://github.com/ros2/robot_state_publisher/issues/29>`_)
-* Don't export exe as library (`#25 <https://github.com/ros2/robot_state_publisher/issues/25>`_) (`ros2 #28 <https://github.com/ros2/robot_state_publisher/issues/28>`_)
+1.15.2 (2021-09-30)
+-------------------
+* Reimplement tf_prefix in Noetic exactly as it was in Melodic (`#169 <https://github.com/ros/robot_state_publisher/issues/169>`_)
+* Include joint_states_index.bag in repo (`#176 <https://github.com/ros/robot_state_publisher/issues/176>`_)
 * Contributors: Shane Loretz
 
-2.2.3 (2019-06-12)
-------------------
-* Use rclcpp::Time for stamping transforms (`#20 <https://github.com/ros2/robot_state_publisher/issues/20>`_)
-* Contributors: Scott K Logan
+1.15.1 (2020-04-24)
+-------------------
 
-2.2.2 (2019-05-08)
-------------------
-* changes to avoid deprecated API's (`#19 <https://github.com/ros2/robot_state_publisher/issues/19>`_)
-* Contributors: William Woodall
+1.15.0 (2020-04-17)
+-------------------
+* Remove state_publisher and add in a public default constructor (`#87 <https://github.com/ros/robot_state_publisher/issues/87>`_)
+* Added support for custom RobotStatePublisher implementations (API/ABI break) (`#115 <https://github.com/ros/robot_state_publisher/issues/115>`_)
+* Bump CMake version to avoid CMP0048 (`#136 <https://github.com/ros/robot_state_publisher/issues/136>`_)
+* Add missing test depend rosbag (`#135 <https://github.com/ros/robot_state_publisher/issues/135>`_)
+* Used orocos keys (`#134 <https://github.com/ros/robot_state_publisher/issues/134>`_)
+* Add joint_state_listener to the catkin package LIBRARIES (`#112 <https://github.com/ros/robot_state_publisher/issues/112>`_) (`#114 <https://github.com/ros/robot_state_publisher/issues/114>`_)
+* Make sure to make sensor_msgs a catkin dependency. (`#122 <https://github.com/ros/robot_state_publisher/issues/122>`_)
+* update how compiler flags are added (`#104 <https://github.com/ros/robot_state_publisher/issues/104>`_)
+* update install destination in CMakeLists.txt (`#103 <https://github.com/ros/robot_state_publisher/issues/103>`_)
+* Remove treefksolver completely from the repository. (`#100 <https://github.com/ros/robot_state_publisher/issues/100>`_)
+* changed return code from -1 to 1 since its considered a reserved bash exit code (`#98 <https://github.com/ros/robot_state_publisher/issues/98>`_)
+* Fixed problem when building static library version (`#92 <https://github.com/ros/robot_state_publisher/issues/92>`_) (`#96 <https://github.com/ros/robot_state_publisher/issues/96>`_)
+* Add Ian as a maintainer for robot_state_publisher. (`#94 <https://github.com/ros/robot_state_publisher/issues/94>`_)
+* added warning when joint is found in joint message but not in the urdf (`#83 <https://github.com/ros/robot_state_publisher/issues/83>`_)
+* added ros_warn if JointStateMessage is older than 30 seconds (`#84 <https://github.com/ros/robot_state_publisher/issues/84>`_)
+* Add tcp_no_delay to joint_states subscriber (`#80 <https://github.com/ros/robot_state_publisher/issues/80>`_) (`#85 <https://github.com/ros/robot_state_publisher/issues/85>`_)
+* Remove dependency on tf and tf_prefix support (`#82 <https://github.com/ros/robot_state_publisher/issues/82>`_)
+* make rostest in CMakeLists optional (`ros/rosdistro#3010 <https://github.com/ros/rosdistro/issues/3010>`_) (`#75 <https://github.com/ros/robot_state_publisher/issues/75>`_)
+* Added c++11 target_compile_options (`#78 <https://github.com/ros/robot_state_publisher/issues/78>`_)
+* Contributors: Alejandro Hernández Cordero, Chris Lalancette, James Xu, Lukas Bulwahn, Martin Pecka, Shane Loretz, betab0t, jgueldenstein
 
-2.2.1 (2019-04-26)
-------------------
-* Updated to avoid deprecated API. (`#18 <https://github.com/ros2/robot_state_publisher/issues/18>`_)
-* Contributors: William Woodall
-
-2.2.0 (2019-04-14)
-------------------
-* Set urdf content as parameter. (`#15 <https://github.com/ros2/robot_state_publisher/issues/15>`_)
-* Contributors: Karsten Knese
-
-2.1.0 (2018-06-27)
-------------------
-* The robot model is now published on the ``robot_description`` topic as a ``std_msgs/String.msg``. (`#9 <https://github.com/ros2/robot_state_publisher/issues/9>`_)
-* Contributors: Brett, Mikael Arguedas
+1.13.5 (2017-04-11)
+-------------------
+* Style cleanup throughout the tree.
+* add Chris and Shane as maintainers (`#70 <https://github.com/ros/robot_state_publisher/issues/70>`_)
+* Contributors: Chris Lalancette, William Woodall
 
 1.13.4 (2017-01-05)
 -------------------
