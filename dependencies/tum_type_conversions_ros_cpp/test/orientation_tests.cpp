@@ -7,7 +7,7 @@
 #include "tum_type_conversions_ros_cpp/orientation.hpp"
 TEST(orientation_conversion_tests, euler_quaternion_conversion)
 {
-  geometry_msgs::msg::Quaternion q;
+  geometry_msgs::Quaternion q;
   q.x = 1.0;
   q.y = 0.4;
   q.z = 0.6;
@@ -40,6 +40,7 @@ TEST(orientation_conversion_tests, euler_quaternion_conversion_scale)
 }
 int main(int argc, char ** argv)
 {
+  ros::init(argc, argv, "orientation_conversion_tests");
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

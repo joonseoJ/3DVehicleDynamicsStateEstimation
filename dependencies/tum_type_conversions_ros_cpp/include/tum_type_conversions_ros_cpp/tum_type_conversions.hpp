@@ -3,20 +3,18 @@
 #include <math.h>
 
 // ROS
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
-
-#include <rclcpp/rclcpp.hpp>
+#include <tf/transform_datatypes.h>
+#include <ros/ros.h>
 
 // messages
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "geometry_msgs/msg/vector3.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-#include "msgs/msg/tum_float64_per_wheel.hpp"
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <geometry_msgs/AccelWithCovarianceStamped.h>
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Vector3.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <msgs/TUMFloat64PerWheel.h>
 
 // types
 #include "tum_helpers_cpp/type_conversion.hpp"
@@ -26,36 +24,36 @@
 namespace tam::type_conversions
 {
 // Basic types
-uint64_t header_stamp_type_from_msg(builtin_interfaces::msg::Time const & msg);
-builtin_interfaces::msg::Time header_stamp_msg_from_type(const uint64_t & header);
+uint64_t header_stamp_type_from_msg(const ros::Time& msg);
+ros::Time header_stamp_msg_from_type(const uint64_t& header);
 tam::types::common::Vector3D<double> vector_3d_type_from_msg(
-  geometry_msgs::msg::Vector3 const & msg);
-tam::types::common::Vector3D<double> vector_3d_type_from_msg(geometry_msgs::msg::Point const & msg);
-geometry_msgs::msg::Vector3 vector_3d_msg_from_type(
-  tam::types::common::Vector3D<double> const & vector_3d);
-geometry_msgs::msg::Point point_msg_from_type(
-  tam::types::common::Vector3D<double> const & vector_3d);
+  const geometry_msgs::Vector3& msg);
+tam::types::common::Vector3D<double> vector_3d_type_from_msg(const geometry_msgs::Point& msg);
+geometry_msgs::Vector3 vector_3d_msg_from_type(
+  const tam::types::common::Vector3D<double>& vector_3d);
+geometry_msgs::Point point_msg_from_type(
+  const tam::types::common::Vector3D<double>& vector_3d);
 tam::types::ErrorLvl error_type_from_diagnostic_level(unsigned char lvl);
-unsigned char diagnostic_level_from_type(const tam::types::ErrorLvl & lvl);
+unsigned char diagnostic_level_from_type(const tam::types::ErrorLvl& lvl);
 
 // State Estimation
 tam::types::control::AccelerationwithCovariances accel_with_covariance_stamped_type_from_msg(
-  geometry_msgs::msg::AccelWithCovarianceStamped const & msg);
-geometry_msgs::msg::AccelWithCovarianceStamped accel_with_covariance_stamped_msg_from_type(
-  const tam::types::control::AccelerationwithCovariances & acceleration);
+  const geometry_msgs::AccelWithCovarianceStamped& msg);
+geometry_msgs::AccelWithCovarianceStamped accel_with_covariance_stamped_msg_from_type(
+  const tam::types::control::AccelerationwithCovariances& acceleration);
 tam::types::control::AccelerationwithCovariances acceleration_with_covariances_type_from_imu_msg(
-  sensor_msgs::msg::Imu const & msg);
-tam::types::control::Odometry odometry_type_from_msg(nav_msgs::msg::Odometry const & odometry);
-nav_msgs::msg::Odometry odometry_msg_from_type(const tam::types::control::Odometry & odometry);
-tam::types::control::Odometry odometry_type_from_imu_msg(sensor_msgs::msg::Imu const & msg);
+  const sensor_msgs::Imu& msg);
+tam::types::control::Odometry odometry_type_from_msg(const nav_msgs::Odometry& odometry);
+nav_msgs::Odometry odometry_msg_from_type(const tam::types::control::Odometry& odometry);
+tam::types::control::Odometry odometry_type_from_imu_msg(const sensor_msgs::Imu& msg);
 
 tam::types::control::Odometry odometry_type_from_imu_msg(
-  const sensor_msgs::msg::Imu::SharedPtr msg);
+  const sensor_msgs::Imu::ConstPtr& msg);
 tam::types::control::AccelerationwithCovariances acceleration_with_covariances_type_from_imu_msg(
-  const sensor_msgs::msg::Imu::SharedPtr msg);
+  const sensor_msgs::Imu::ConstPtr& msg);
 }  // namespace tam::type_conversions
+
 namespace tam::type::conversions::cpp
 {
-/// @brief Here for backwards compability
-tam::types::control::Odometry Odometry_type_from_msg(const nav_msgs::msg::Odometry::SharedPtr msg);
+tam::types::control::Odometry Odometry_type_from_msg(const nav_msgs::Odometry::ConstPtr& msg);
 }  // namespace tam::type::conversions::cpp
