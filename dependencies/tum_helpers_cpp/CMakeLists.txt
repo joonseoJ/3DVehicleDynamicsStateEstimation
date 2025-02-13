@@ -1,58 +1,57 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.0.2)
+project(tum_helpers_cpp)
 
-# CONFIGURE PKG HERE
-# ==========================================
-set(PROJECT_NAME tum_helpers_cpp)
-set(DEPENDENCIES
-  Eigen3
-  tum_types_cpp
-)
-# ============================================
-# END OF CONFIGURATION
-
-project(${PROJECT_NAME})
-
+## Compiler Option
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
-foreach(pkg_name ${DEPENDENCIES})
-  find_package(${pkg_name} REQUIRED)
-endforeach()
+## Package Dependencies
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+)
 
-# section: HEADER-ONLY LIBRARY TARGET
-# ====================================================================
+find_package(Eigen3 REQUIRED)
+find_package(tum_types_cpp REQUIRED)
+
+## catkin package
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS roscpp std_msgs
+  DEPENDS Eigen3 tum_types_cpp
+)
+
+include_directories(${EIGEN3_INCLUDE_DIRS})
+
+## HEADER-ONLY LIBRARY TARGET
 add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
 )
 
 target_compile_options(${PROJECT_NAME} INTERFACE -Ofast)
-target_compile_features(${PROJECT_NAME} INTERFACE c_std_99 cxx_std_17)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 
-ament_target_dependencies(${PROJECT_NAME} INTERFACE Eigen3 tum_types_cpp)
+target_link_libraries(${PROJECT_NAME} INTERFACE tum_types_cpp)
+
 
 install(
   DIRECTORY include/
-  DESTINATION include
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(${DEPENDENCIES})
-
-ament_package()
+install(
+  FILES export_${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
