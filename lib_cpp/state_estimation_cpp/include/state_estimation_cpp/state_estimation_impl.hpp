@@ -5,7 +5,7 @@
 namespace tam::core::state
 {
 template <typename TConfig> StateEstimation<TConfig>::StateEstimation(
-  const std::string & vehicle_model)
+  const std::string & vehicle_model, ros::NodeHandle nh)
 {
   // initialize all subclasses
   state_machine_ = std::make_unique<tam::core::state::StateMachine<TConfig>>();
@@ -24,48 +24,34 @@ template <typename TConfig> StateEstimation<TConfig>::StateEstimation(
     throw std::invalid_argument(
       "[StateEstimationCPP]: Kalman filter could not be initialized - check the template");
   }
-
-  // param_manager
-  param_manager_composer_ = std::make_shared<tam::core::ParamManagerComposer>(
-    std::vector<std::shared_ptr<tam::interfaces::ParamManagerBase>>{
-      state_machine_->get_param_handler(), vehicle_model_handler_->get_param_handler(),
-      imu_handler_->get_param_handler(), ref_orientation_handler_->get_param_handler(),
-      kalman_filter_->get_param_handler()});
+  
+  nh_ = nh;
 
   // Allow the state estimation to initialize its state without a vaild velocity measurement
-  param_manager_composer_->declare_parameter(
-    "P_VDC_InitializeWithVelocity", true, tam::types::param::ParameterType::BOOL, "");
+  nh_.setParam("P_VDC_InitializeWithVelocity", true);
 
   // Allow the state estimation to overwrite the state machine if the state covariance
   // for the position is below this threshold
-  param_manager_composer_->declare_parameter(
-    "P_VDC_SafeCovarianceThreshold", 0.5, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_SafeCovarianceThreshold", 0.5);
 
   // Allow the state estimation to fuse the road angles as orientation measurement
-  param_manager_composer_->declare_parameter(
-    "P_VDC_FuseRoadAngles", false, tam::types::param::ParameterType::BOOL, "");
+  nh_.setParam("P_VDC_FuseRoadAngles", false);
 
   // Allow the state estimation to fuse the reference orientation as orientation measurement
-  param_manager_composer_->declare_parameter(
-    "P_VDC_FuseRefAngles", true, tam::types::param::ParameterType::BOOL, "");
+  nh_.setParam("P_VDC_FuseRefAngles", true);
 
   // Squared distance threshold used to set the linear velocity input invalid
-  param_manager_composer_->declare_parameter(
-    "P_VDC_HardLinearVelocityOutlierTH", 10.0, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_HardLinearVelocityOutlierTH", 10.0);
 
   // Squared distance threshold on acceleration input used to set the IMU input invalid
-  param_manager_composer_->declare_parameter(
-    "P_VDC_HardAccelerometerOutlierTH", 1000.0, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
 
   // Squared distance threshold on angular velocity input used to set the IMU input invalid
-  param_manager_composer_->declare_parameter(
-    "P_VDC_HardAngularVelocityOutlierTH", 1.0, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
 
   // Number of Consecutive hard outliers before changing the State Machine status
-  param_manager_composer_->declare_parameter(
-    "P_VDC_MaxConsecutiveVelHardOutliers", 250, tam::types::param::ParameterType::INTEGER, "");
-  param_manager_composer_->declare_parameter(
-    "P_VDC_MaxConsecutiveIMUHardOutliers", 50, tam::types::param::ParameterType::INTEGER, "");
+  nh_.setParam("P_VDC_MaxConsecutiveVelHardOutliers", 250);
+  nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
 
   // set the input and measurent vector to zero
   u_.setZero();
@@ -89,7 +75,9 @@ template <typename TConfig> void StateEstimation<TConfig>::step()
 
   // update the reference orientation based on the updated imu measurements
   // and the last predicted vehicle odometry
-  if (param_manager_composer_->get_parameter_value("P_VDC_FuseRefAngles").as_bool()) {
+  bool P_VDC_FuseRefAngles;
+  nh_.getParam("P_VDC_FuseRefAngles", P_VDC_FuseRefAngles);
+  if (P_VDC_FuseRefAngles) {
     // set the output as last orientation measurement
     tam::types::control::Odometry ref_orientation = ref_orientation_handler_->update(x_out_, u_);
     ref_angles_ = ref_orientation.orientation_rad;
@@ -100,7 +88,9 @@ template <typename TConfig> void StateEstimation<TConfig>::step()
   }
 
   // update the measurement matrix of the Kalman filter to only fuse updated and valid measurements
-  if (param_manager_composer_->get_parameter_value("P_VDC_EnableMeasCovAdaptation_EKF").as_bool()) {
+  bool P_VDC_EnableMeasCovAdaptation_EKF;
+  nh_.getParam("P_VDC_EnableMeasCovAdaptation_EKF", P_VDC_EnableMeasCovAdaptation_EKF);
+  if (P_VDC_EnableMeasCovAdaptation_EKF) {
     // update the measurement covariance matrix of the Kalman filter
     kalman_filter_->update_measurement_covariance_matrix(state_machine_->get_debug());
   }
@@ -125,9 +115,11 @@ template <typename TConfig> void StateEstimation<TConfig>::step()
   x_out_ = kalman_filter_->get_state_vector();
 
   // overwrite the state machine if the state estimation is in a safe state
+  double P_VDC_SafeCovarianceThreshold;
+  nh_.getParam("P_VDC_SafeCovarianceThreshold", P_VDC_SafeCovarianceThreshold);
   if ((kalman_filter_->get_covariance_matrix()(TConfig::STATE_POS_X_M,TConfig::STATE_POS_X_M)
        + kalman_filter_->get_covariance_matrix()(TConfig::STATE_POS_Y_M, TConfig::STATE_POS_Y_M)) / 2
-      < param_manager_composer_->get_parameter_value("P_VDC_SafeCovarianceThreshold").as_double()){
+      < P_VDC_SafeCovarianceThreshold){
     state_machine_->update(true);
   } else {
     state_machine_->update();
@@ -150,8 +142,10 @@ template <typename TConfig> bool StateEstimation<TConfig>::set_initial_state(voi
   bool input_valid = false;
 
   // ensure that enough imus are valid to not trigger a safe stop after init
+  int P_VDC_MinValidIMUs;
+  nh_.getParam("P_VDC_MinValidIMUs", P_VDC_MinValidIMUs);
   if (state_machine_->get_num_valid_imus()
-      < param_manager_composer_->get_parameter_value("P_VDC_MinValidIMUs").as_int()) {
+      < P_VDC_MinValidIMUs) {
     return false;
   }
 
@@ -209,7 +203,9 @@ template <typename TConfig> bool StateEstimation<TConfig>::set_initial_state(voi
     }
   }
 
-  if (param_manager_composer_->get_parameter_value("P_VDC_InitializeWithVelocity").as_bool()) {
+  bool P_VDC_InitializeWithVelocity;
+  nh_.getParam("P_VDC_InitializeWithVelocity", P_VDC_InitializeWithVelocity);
+  if (P_VDC_InitializeWithVelocity) {
     // if a valid position and orientation was found also search for a valid velocity measurement
     if (input_valid) {
       for (int i = 0; i < TConfig::NUM_VEL_MEASUREMENT; ++i) {
@@ -292,7 +288,9 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_position(
         = Eigen::VectorXd::Ones(TConfig::POS_MEASUREMENT_VECTOR_SIZE);
 
       // update the variance of the sensor to adapt the R matrix of the kalman filter
-      if (param_manager_composer_->get_parameter_value("P_VDC_EnableMeasCovAdaptation_EKF").as_bool()) {
+      bool P_VDC_EnableMeasCovAdaptation_EKF;
+      nh_.getParam("P_VDC_EnableMeasCovAdaptation_EKF", P_VDC_EnableMeasCovAdaptation_EKF);
+      if (P_VDC_EnableMeasCovAdaptation_EKF) {
         Eigen::Vector<double, TConfig::POS_MEASUREMENT_VECTOR_SIZE> covariance;
         covariance << odometry.pose_covariance[0], odometry.pose_covariance[7];
         kalman_filter_->set_position_covariance(covariance, pos_num);
@@ -322,7 +320,9 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_position(
         = Eigen::VectorXd::Ones(TConfig::POS_MEASUREMENT_VECTOR_SIZE);
 
       // update the variance of the sensor to adapt the R matrix of the kalman filter
-      if (param_manager_composer_->get_parameter_value("P_VDC_EnableMeasCovAdaptation_EKF").as_bool()) {
+      bool P_VDC_EnableMeasCovAdaptation_EKF;
+      nh_.getParam("P_VDC_EnableMeasCovAdaptation_EKF", P_VDC_EnableMeasCovAdaptation_EKF);
+      if (P_VDC_EnableMeasCovAdaptation_EKF) {
         Eigen::Vector<double, TConfig::POS_MEASUREMENT_VECTOR_SIZE> covariance;
         covariance << odometry.pose_covariance[0], odometry.pose_covariance[7],
                       odometry.pose_covariance[14];
@@ -427,7 +427,9 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_orientation
       }
 
       // update the variance of the sensor to adapt the R matrix of the kalman filter
-      if (param_manager_composer_->get_parameter_value("P_VDC_EnableMeasCovAdaptation_EKF").as_bool()) {
+      bool P_VDC_EnableMeasCovAdaptation_EKF;
+      nh_.getParam("P_VDC_EnableMeasCovAdaptation_EKF", P_VDC_EnableMeasCovAdaptation_EKF);
+      if (P_VDC_EnableMeasCovAdaptation_EKF) {
         Eigen::Vector<double, TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE> covariance;
         covariance << odometry.pose_covariance[35];
         kalman_filter_->set_orientation_covariance(covariance, orientation_num);
@@ -477,7 +479,9 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_orientation
       }
 
       // update the variance of the sensor to adapt the R matrix of the kalman filter
-      if (param_manager_composer_->get_parameter_value("P_VDC_EnableMeasCovAdaptation_EKF").as_bool()) {
+      bool P_VDC_EnableMeasCovAdaptation_EKF;
+      nh_.getParam("P_VDC_EnableMeasCovAdaptation_EKF", P_VDC_EnableMeasCovAdaptation_EKF);
+      if (P_VDC_EnableMeasCovAdaptation_EKF) {
         Eigen::Vector<double, TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE> covariance;
         covariance << odometry.pose_covariance[21], odometry.pose_covariance[28],
                       odometry.pose_covariance[35];
@@ -608,8 +612,8 @@ void StateEstimation<TConfig>::set_input_linear_velocity(
       Eigen::Vector<double, TConfig::VEL_MEASUREMENT_VECTOR_SIZE> outlier_distance_veh_model
         = tam::core::state::outlier_detection::squared_distance(
             vehicle_model_velocity_, odometry.velocity_mps);
-      double outlier_threshold =
-        param_manager_composer_->get_parameter_value("P_VDC_HardLinearVelocityOutlierTH").as_double();
+      double outlier_threshold;
+      nh_.getParam("P_VDC_HardLinearVelocityOutlierTH", outlier_threshold);
       if ((outlier_distance_se.array() < outlier_threshold).all() || (0.0 == x_out_.segment(
           TConfig::STATE_VX_MPS, TConfig::VEL_MEASUREMENT_VECTOR_SIZE).array()).all()) {
         // set the bits corresponding to this linear velocity input in the fusion_vec to one
@@ -643,8 +647,8 @@ void StateEstimation<TConfig>::set_input_linear_velocity_status(
 {
   // forward the status of the linear velocity input to the state machine
   if (vel_num < TConfig::NUM_VEL_MEASUREMENT) {
-    int max_outlier_threshold =
-      param_manager_composer_->get_parameter_value("P_VDC_MaxConsecutiveVelHardOutliers").as_int();
+    int max_outlier_threshold;
+    nh_.getParam("P_VDC_MaxConsecutiveVelHardOutliers", max_outlier_threshold);
     if (outlier_buffer_[vel_num] < max_outlier_threshold) {
       state_machine_->set_linear_velocity_status(status, vel_num);
     } else {
@@ -739,7 +743,9 @@ void StateEstimation<TConfig>::set_input_acceleration(
       Eigen::Vector<double,  3> outlier_distance
         = tam::core::state::outlier_detection::squared_distance(
             u_.segment(TConfig::INPUT_AX_MPS2, 3), acceleration.acceleration_mps2);
-      if ((param_manager_composer_->get_parameter_value("P_VDC_HardAccelerometerOutlierTH").as_double()
+      bool P_VDC_HardAccelerometerOutlierTH;
+      nh_.getParam("P_VDC_HardAccelerometerOutlierTH", P_VDC_HardAccelerometerOutlierTH);
+      if ((P_VDC_HardAccelerometerOutlierTH
           > outlier_distance.array()).all() || imu_num >= TConfig::NUM_IMU_MEASUREMENT || (0.0 ==
           u_.segment(TConfig::INPUT_AX_MPS2, 3).array()).all()) {
         // set ax_mps2 of the raw input vector
@@ -818,7 +824,9 @@ void StateEstimation<TConfig>::set_input_angular_velocity(
       Eigen::Vector<double,  3> outlier_distance
         = tam::core::state::outlier_detection::squared_distance(
             u_.segment(TConfig::INPUT_DPHI_RADPS, 3), odometry.angular_velocity_radps);
-      if ((param_manager_composer_->get_parameter_value("P_VDC_HardAngularVelocityOutlierTH").as_double()
+      bool P_VDC_HardAngularVelocityOutlierTH;
+      nh_.getParam("P_VDC_HardAngularVelocityOutlierTH", P_VDC_HardAngularVelocityOutlierTH);
+      if ((P_VDC_HardAngularVelocityOutlierTH
           > outlier_distance.array()).all() || imu_num >= TConfig::NUM_IMU_MEASUREMENT || (0.0 ==
           u_.segment(TConfig::INPUT_DPHI_RADPS, 3).array()).all()) {
         // set dphi_rads of the raw input vector
@@ -863,8 +871,8 @@ void StateEstimation<TConfig>::set_input_angular_velocity(
 template <typename TConfig> void StateEstimation<TConfig>::set_input_imu_status(
   const tam::types::ErrorLvl & status, uint8_t imu_num)
 {
-  int max_outlier_threshold =
-    param_manager_composer_->get_parameter_value("P_VDC_MaxConsecutiveIMUHardOutliers").as_int();
+  int max_outlier_threshold;
+  nh_.getParam("P_VDC_MaxConsecutiveIMUHardOutliers", max_outlier_threshold);
   tam::types::ErrorLvl imu_status = status;
 
   // outlier rejection
@@ -1060,7 +1068,9 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_road_angles
 
   if constexpr (stateestimation::HasStateThetaRad<TConfig>) {
     // additionally fuse the road angles to improve the orientation prediction for 3D filters
-    if (param_manager_composer_->get_parameter_value("P_VDC_FuseRoadAngles").as_bool()) {
+    bool P_VDC_FuseRoadAngles;
+    nh_.getParam("P_VDC_FuseRoadAngles", P_VDC_FuseRoadAngles);
+    if (P_VDC_FuseRoadAngles) {
       Eigen::Vector<double, 2> orientation;
       orientation << road_angles.x, road_angles.y;
 
@@ -1090,7 +1100,9 @@ void StateEstimation<TConfig>::set_input_road_angle_status(
 {
   // forward the status of the penultimate orientation input to the state machine
   // if the road angles should be fused
-  if (param_manager_composer_->get_parameter_value("P_VDC_FuseRoadAngles").as_bool()) {
+  bool P_VDC_FuseRoadAngles;
+  nh_.getParam("P_VDC_FuseRoadAngles", P_VDC_FuseRoadAngles);
+  if (P_VDC_FuseRoadAngles) {
     state_machine_->set_orientation_status(status, TConfig::NUM_ORIENTATION_MEASUREMENT - 2);
   }
 }
@@ -1116,11 +1128,13 @@ void StateEstimation<TConfig>::set_input_road_angle_status(
 template <typename TConfig> void StateEstimation<TConfig>::set_imu_offsets(void)
 {
   if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+    std::vector<double> P_VDC_InitialBias;
+    nh_.getParam("P_VDC_InitialBias", P_VDC_InitialBias);
     // imu offsets in 2D
     Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>
       imu_bias = Eigen::Map<Eigen::VectorXd>(
-        param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().data(),
-        param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().size());
+        P_VDC_InitialBias.data(),
+        P_VDC_InitialBias.size());
 
     // set the sensor biases for the imu handler
     imu_handler_->set_road_angles(road_angles_);
@@ -1129,8 +1143,8 @@ template <typename TConfig> void StateEstimation<TConfig>::set_imu_offsets(void)
     // imu offsets in 3D
     // ToDo(Marcel): Remove if we predict the bias or generate a function in kalman base class
     Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE> imu_bias = Eigen::Map<Eigen::VectorXd>(
-      param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().data(),
-      param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().size());
+      P_VDC_InitialBias.data(),
+      P_VDC_InitialBias.size());
 
     // set the sensor biases for the imu handler
     imu_handler_->set_sensor_bias(imu_bias);
@@ -1141,12 +1155,12 @@ template <typename TConfig> void StateEstimation<TConfig>::set_imu_offsets(void)
 /**
  * @brief returns a pointer to the param manager composer
  *
- * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+ * @param[out]                  - ros::NodeHandle
  */
-template <typename TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <typename TConfig> ros::NodeHandle
   StateEstimation<TConfig>::get_param_handler()
 {
-  return param_manager_composer_;
+  return nh_;
 }
 
 /**

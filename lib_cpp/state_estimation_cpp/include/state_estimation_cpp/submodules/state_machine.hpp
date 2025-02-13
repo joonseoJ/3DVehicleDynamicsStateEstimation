@@ -12,10 +12,6 @@
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
-
 // State Estimation constants / template input
 #include "state_estimation_constants/EKF_2D.hpp"
 #include "state_estimation_constants/EKF_3D.hpp"
@@ -49,15 +45,15 @@ private:
   bool backup_imu_active_ = false;
 
   /**
-   * @brief IAC Parameter Manager
+   * @brief ROS Node Handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+  ros::NodeHandle nh_;
 
 public:
   /**
    * @brief Constructor
    */
-  StateMachine();
+  StateMachine(ros::NodeHandle nh);
 
   /**
    * @brief Update the State Estimaion State Machine
@@ -209,9 +205,9 @@ public:
   /**
    * @brief returns a pointer to the param manager
    *
-   * @param[out]                          - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                          - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void);
+   ros::NodeHandle get_param_handler(void);
 };
 }  // namespace tam::core::state
 #include "state_estimation_cpp/submodules/state_machine_impl.hpp"

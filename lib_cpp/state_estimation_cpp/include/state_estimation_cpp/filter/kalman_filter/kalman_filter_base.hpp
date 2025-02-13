@@ -12,10 +12,6 @@
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
-
 // helper functions
 #include "tum_helpers_cpp/geometry/geometry.hpp"
 
@@ -109,9 +105,9 @@ public:
     get_covariance_matrix(void);
 
   /**
-   * @brief Get pointer on param manager
+   * @brief Get ROS Node Handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void);
+  ros::NodeHandle get_param_handler(void);
 
   // virtual functions
   /**
@@ -243,9 +239,9 @@ protected:
   std::map<std::string, bool> previous_valid_map_;
 
   /**
-   * @brief Pointer on the param manager
+   * @brief ROS Node Handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+  ros::NodeHandle nh_;
 };
 }  // namespace tam::core::state
 #include "state_estimation_cpp/filter/kalman_filter/kalman_filter_base_impl.hpp"

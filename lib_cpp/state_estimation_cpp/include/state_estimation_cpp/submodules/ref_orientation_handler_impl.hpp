@@ -4,15 +4,14 @@
 
 namespace tam::core::state
 {
-template <typename TConfig> RefOrientationHandler<TConfig>::RefOrientationHandler()
+template <typename TConfig> RefOrientationHandler<TConfig>::RefOrientationHandler(ros::NodeHandle nh)
 {
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  nh_ = nh;
 
-  param_manager_->declare_parameter(
-    "P_VDC_v_dot_filter_coefficients",
-    std::vector<double>{0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
-    0.24522338986219644, 0.07722183762197628}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_v_dot_filter_coefficients", std::vector<double>{
+    0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
+    0.24522338986219644, 0.07722183762197628}
+  );
 }
 
 /**
@@ -62,9 +61,11 @@ const tam::types::control::Odometry & RefOrientationHandler<TConfig>::update(
     v_t_minus_two_ = x.segment(TConfig::STATE_VX_MPS, TConfig::VEL_MEASUREMENT_VECTOR_SIZE);
 
     // set the Filter Coefficients
+    std::vector<double> P_VDC_v_dot_filter_coefficients;
+    nh_.getParam("P_VDC_v_dot_filter_coefficients", P_VDC_v_dot_filter_coefficients);
     Eigen::VectorXd imu_filter_coefficients = Eigen::Map<Eigen::VectorXd>(
-      param_manager_->get_parameter_value("P_VDC_v_dot_filter_coefficients").as_double_array().data(),
-      param_manager_->get_parameter_value("P_VDC_v_dot_filter_coefficients").as_double_array().size());
+      P_VDC_v_dot_filter_coefficients.data(),
+      P_VDC_v_dot_filter_coefficients.size());
 
     for (std::size_t i = 0; i < TConfig::VEL_MEASUREMENT_VECTOR_SIZE; ++i) {
         filter_[i] = std::make_unique<tam::core::state::FIR>(imu_filter_coefficients);
@@ -147,11 +148,11 @@ requires (reforientationhandler::HasStateThetaRad<TConfig>)
 /**
  * @brief returns a pointer to the param manager
  *
- * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+ * @param[out]                  - ros::NodeHandle
  */
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   RefOrientationHandler<TConfig>::get_param_handler(void)
 {
-  return param_manager_;
+  return nh_;
 }
 }  // namespace tam::core::state

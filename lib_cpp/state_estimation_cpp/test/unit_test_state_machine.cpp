@@ -194,7 +194,7 @@ TEST(ExecutionUnitTests, StateMachineOneBackupIMUError) {
 
     // get the param handler
     auto param_handler = StateEstimation.get_param_handler();
-    param_handler->set_parameter_value("P_VDC_MinValidIMUs", 1);
+    param_handler.setParam("P_VDC_MinValidIMUs", 1);
 
     // set the sensor status to initialize the state machine
     StateEstimation.set_input_position_status(tam::types::ErrorLvl::OK, 0);
@@ -237,7 +237,7 @@ TEST(ExecutionUnitTests, StateMachineOneBackupIMUStale) {
 
     // get the param handler
     auto param_handler = StateEstimation.get_param_handler();
-    param_handler->set_parameter_value("P_VDC_MinValidIMUs", 1);
+    param_handler->setParam("P_VDC_MinValidIMUs", 1);
 
     // set the sensor status to initialize the state machine
     StateEstimation.set_input_position_status(tam::types::ErrorLvl::OK, 0);
@@ -281,7 +281,7 @@ TEST(ExecutionUnitTests, StateMachineOneBackupIMULocFailStale) {
 
     // get the param handler
     auto param_handler = StateEstimation.get_param_handler();
-    param_handler->set_parameter_value("P_VDC_MinValidIMUs", 1);
+    param_handler->setParam("P_VDC_MinValidIMUs", 1);
 
     // set the sensor status to initialize the state machine
     StateEstimation.set_input_position_status(tam::types::ErrorLvl::OK, 0);
@@ -328,7 +328,7 @@ TEST(ExecutionUnitTests, StateMachineOneBackupIMUVelFailStale) {
 
     // get the param handler
     auto param_handler = StateEstimation.get_param_handler();
-    param_handler->set_parameter_value("P_VDC_MinValidIMUs", 1);
+    param_handler->setParam("P_VDC_MinValidIMUs", 1);
 
     // set the sensor status to initialize the state machine
     StateEstimation.set_input_position_status(tam::types::ErrorLvl::OK, 0);
@@ -374,7 +374,7 @@ TEST(ExecutionUnitTests, StateMachineOneBackupIMULocVelFailStale) {
 
     // get the param handler
     auto param_handler = StateEstimation.get_param_handler();
-    param_handler->set_parameter_value("P_VDC_MinValidIMUs", 1);
+    param_handler->setParam("P_VDC_MinValidIMUs", 1);
 
     // set the sensor status to initialize the state machine
     StateEstimation.set_input_position_status(tam::types::ErrorLvl::OK, 0);

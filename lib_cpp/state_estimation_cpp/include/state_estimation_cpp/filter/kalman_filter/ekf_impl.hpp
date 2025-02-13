@@ -13,29 +13,32 @@ template <typename TConfig> EKF<TConfig>::EKF()
     A_.setZero();
     B_.setZero();
 
-    param_manager_->declare_parameter(
-      "P_VDC_MeasCov",
-      std::vector<double>{0.4, 0.4, 0.4, 0.4, 0.2, 0.1, 0.1, 0.1, 0.04, 0.04, 0.01, 0.01, 0.01, 0.01,
-      0.05, 0.05, 0.1, 0.1, 0.1, 2.0}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_InputCov",
-      std::vector<double>{0.00015, 0.5, 1.8}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_OutlierBounds",
-      std::vector<double>{2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-      2.0, 1.0, 2.0, 1.0, 2.0, 2.0}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_MahalanobisCovariance",
-      std::vector<double>{3.5, 2.0, 3.5, 2.0, 3.5, 2.0, 3.5, 2.0, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-      2.0, 1.0, 2.0, 1.0, 2.0, 5.0}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
+    nh_.setParam("P_VDC_MeasCov", std::vector<double>{
+      0.4, 0.4, 0.4, 0.4, 
+      0.2, 0.1, 0.1, 0.1, 
+      0.04, 0.04, 0.01, 0.01, 
+      0.01, 0.01, 0.05, 0.05, 
+      0.1, 0.1, 0.1, 2.0}
+    );
+    nh_.setParam("P_VDC_InputCov", std::vector<double>{0.00015, 0.5, 1.8});
+    nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
+      2.0, 2.0, 2.0, 2.0, 
+      2.0, 2.0, 2.0, 2.0, 
+      0.3, 0.3, 0.3, 0.3, 
+      0.3, 0.3, 2.0, 1.0, 
+      2.0, 1.0, 2.0, 2.0}
+    );
+    nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
+      3.5, 2.0, 3.5, 2.0, 
+      3.5, 2.0, 3.5, 2.0, 
+      0.3, 0.3, 0.3, 0.3, 
+      0.3, 0.3, 2.0, 1.0, 
+      2.0, 1.0, 2.0, 5.0}
+    );
     // Initial guess for the accel and gyro offset
-    param_manager_->declare_parameter(
-      "P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+    nh_.setParam("P_VDC_InitialBias", std::vector<double>{
+      0.0, 0.0, 0.0}
+    );
 
     // set the H_full matrix (this matrix would fuse all measurements)
     // first set the rows that correspond to the localization measurements
@@ -68,39 +71,32 @@ template <typename TConfig> EKF<TConfig>::EKF()
     A_.setZero();
     B_.setZero();
 
-    param_manager_->declare_parameter(
-      "P_VDC_MeasCov",
-      std::vector<double>{0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4,
-                          0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.04, 0.1, 0.1, 0.04,
-                          0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                          0.1, 2.0, 0.1},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_InputCov",
-      std::vector<double>{0.00015, 0.00015, 0.00015, 0.5, 1.8, 2.0},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_OutlierBounds",
-      std::vector<double>{2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
-                          0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-                          0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
-                          2.0, 2.0, 2.0},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-
-    param_manager_->declare_parameter(
-      "P_VDC_MahalanobisCovariance",
-      std::vector<double>{3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0,
-                          0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-                          0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
-                          2.0, 5.0, 5.0},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+    nh_.setParam("P_VDC_MeasCov", std::vector<double>{
+      0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4,
+      0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.04, 0.1, 0.1, 0.04,
+      0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+      0.1, 2.0, 0.1}
+    );
+    nh_.setParam("P_VDC_InputCov", std::vector<double>{
+      0.00015, 0.00015, 0.00015, 0.5, 1.8, 2.0}
+    );
+    nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
+      2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
+      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
+      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
+      2.0, 2.0, 2.0}
+    );
+    nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
+      3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0,
+      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
+      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
+      2.0, 5.0, 5.0}
+    );
 
     // Initial guess for the accel and gyro offset
-    param_manager_->declare_parameter(
-      "P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+    nh_.setParam("P_VDC_InitialBias", std::vector<double>{
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+    );
 
     // set the H_full matrix (this matrix would fuse all measurements)
     // first set the rows that correspond to the localization measurements
@@ -146,29 +142,35 @@ template <typename TConfig> EKF<TConfig>::EKF()
  */
 template <class TConfig> void EKF<TConfig>::set_covariance_matricies(void)
 {
+  std::vector<double> P_VDC_MeasCov, P_VDC_InputCov, P_VDC_OutlierBounds, P_VDC_MahalanobisCovariance;
+  nh_.getParam("P_VDC_MeasCov", P_VDC_MeasCov);
+  nh_.getParam("P_VDC_InputCov", P_VDC_InputCov);
+  nh_.getParam("P_VDC_OutlierBounds", P_VDC_OutlierBounds);
+  nh_.getParam("P_VDC_MahalanobisCovariance", P_VDC_MahalanobisCovariance);
+
   // set the Measurement Noise Covariance Matrix
   R_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().size());
+    P_VDC_MeasCov.data(),
+    P_VDC_MeasCov.size());
 
   R_adaptive_ = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().size());
+    P_VDC_MeasCov.data(),
+    P_VDC_MeasCov.size());
 
   // set the Process Noise Covariance Matrix
   Q_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_InputCov").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_InputCov").as_double_array().size());
+    P_VDC_InputCov.data(),
+    P_VDC_InputCov.size());
 
   // set the outlier bound vector to only load the data from the param manager once
   outlier_bound_ = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_OutlierBounds").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_OutlierBounds").as_double_array().size());
+    P_VDC_OutlierBounds.data(),
+    P_VDC_OutlierBounds.size());
 
   // set the mahalanobis covariance matrix from param manager
   mahalanobis_covariance_ = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_MahalanobisCovariance").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_MahalanobisCovariance").as_double_array().size());
+    P_VDC_MahalanobisCovariance.data(),
+    P_VDC_MahalanobisCovariance.size());
 }
 
 /**
@@ -209,7 +211,9 @@ template <typename TConfig> void EKF<TConfig>::predict(
 
     // Jacobian matrix B consisting of partial derivatives with respect to the
     // system input from the system update equation
-    if (param_manager_->get_parameter_value("P_VDC_EnableInputCrossCorrelation").as_bool()) {
+    bool P_VDC_EnableInputCrossCorrelation;
+    nh_.getParam("P_VDC_EnableInputCrossCorrelation", P_VDC_EnableInputCrossCorrelation);
+    if (P_VDC_EnableInputCrossCorrelation) {
       B_ << 0, 0, 0,
             0, 0, 0,
             1, 0, 0,
@@ -398,7 +402,9 @@ template <typename TConfig> void EKF<TConfig>::predict(
 
     // Jacobian matrix B consisting of partial derivatives with respect to the
     // system input from the system update equation
-    if (param_manager_->get_parameter_value("P_VDC_EnableInputCrossCorrelation").as_bool()) {
+    bool P_VDC_EnableInputCrossCorrelation;
+    nh_.getParam("P_VDC_EnableInputCrossCorrelation", P_VDC_EnableInputCrossCorrelation);
+    if (P_VDC_EnableInputCrossCorrelation) {
       // partial derivatives of Phi_rad
       double dx_phi_wrt_dphi     = 1.0;
       double dx_phi_wrt_dtheta   = sphi * ttheta;
@@ -503,7 +509,9 @@ template <class TConfig> void EKF<TConfig>::update(
   // perform the outlier filtering
   // the maximum allowed residum is defined in the variable P_VDC_OutlierBounds
   residuals_raw_ = residuals_raw_.cwiseProduct(fusion_vec_);
-  if (param_manager_->get_parameter_value("P_VDC_EnableMahalanobisOutlierDetection").as_bool()) {
+  bool P_VDC_EnableMahalanobisOutlierDetection;
+  nh_.getParam("P_VDC_EnableMahalanobisOutlierDetection", P_VDC_EnableMahalanobisOutlierDetection);
+  if (P_VDC_EnableMahalanobisOutlierDetection) {
     residuals_ = tam::core::state::outlier_detection::mahalanobis_outlier_detection<TConfig>(
       residuals_raw_, mahalanobis_covariance_, x_);
   } else {

@@ -2,14 +2,12 @@
 #pragma once
 #include "state_estimation_cpp/submodules/state_machine.hpp"
 
-template <class TConfig> tam::core::state::StateMachine<TConfig>::StateMachine()
+template <class TConfig> tam::core::state::StateMachine<TConfig>::StateMachine(ros::NodeHandle nh)
 {
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  nh_ = nh;
 
   // Minimum number of valid IMUs not to perform a safe stop
-  param_manager_->declare_parameter(
-    "P_VDC_MinValidIMUs", 2, tam::types::param::ParameterType::INTEGER, "");
+  nh_.setParam("P_VDC_MinValidIMUs", 2);
 
   // initialize the valid map for better readability
   // valid bits for the position inputs
@@ -98,7 +96,9 @@ template <class TConfig> void tam::core::state::StateMachine<TConfig>::update(
   // is activated (only active if one lin_vel and loc is valid)
   std::string backup_imu_key = "valid_imu_"
     + std::to_string(TConfig::NUM_IMU_MEASUREMENT + TConfig::NUM_BACKUP_IMU_MEASUREMENT);
-  if (get_num_valid_imus() < param_manager_->get_parameter_value("P_VDC_MinValidIMUs").as_int()
+  int P_VDC_MinValidIMUs;
+  nh_.getParam("P_VDC_MinValidIMUs", P_VDC_MinValidIMUs);
+  if (get_num_valid_imus() < P_VDC_MinValidIMUs
       || (get_num_valid_imus() == 0 && backup_imu_active_ && valid_map_[backup_imu_key])) {
     imu_safe_stop = true;
   }
@@ -535,10 +535,10 @@ std::map<std::string, bool> tam::core::state::StateMachine<TConfig>::get_debug(v
 /**
  * @brief returns a pointer to the param manager
  *
- * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+ * @param[out]                  - ros::NodeHandle
  */
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   tam::core::state::StateMachine<TConfig>::get_param_handler(void)
 {
-  return param_manager_;
+  return nh_;
 }

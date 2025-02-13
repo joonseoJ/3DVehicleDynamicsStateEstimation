@@ -23,22 +23,16 @@ template <class TConfig> KFBase<TConfig>::KFBase()
   mahalanobis_covariance_.setZero();
   fusion_vec_.setZero();
 
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  nh_ = nh;
 
   // declare Kalman filter parameters
-  param_manager_->declare_parameter(
-    "P_VDC_EnableMeasCovAdaptation_EKF", true, tam::types::param::ParameterType::BOOL, "");
-  param_manager_->declare_parameter(
-    "P_VDC_EnableInputCrossCorrelation", true, tam::types::param::ParameterType::BOOL, "");
-  param_manager_->declare_parameter(
-    "P_VDC_EnableMahalanobisOutlierDetection", false, tam::types::param::ParameterType::BOOL, "");
+  nh_.setParam("P_VDC_EnableMeasCovAdaptation_EKF", true);
+  nh_.setParam("P_VDC_EnableInputCrossCorrelation", true);
+  nh_.setParam("P_VDC_EnableMahalanobisOutlierDetection", false);
 
   // declare covariance adaption parameters
-  param_manager_->declare_parameter(
-    "P_VDC_MeasC_lim", 1.5, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_MeasC_decay", 0.00165, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_MeasC_lim", 1.5);
+  nh_.setParam("P_VDC_MeasC_decay", 0.00165);
 }
 
 /**
@@ -52,13 +46,16 @@ template <class TConfig> void
     const std::map<std::string, bool> & valid_map)
 {
   // get the configured Measurement covarinace matrix
+  std::vector<double> P_VDC_MeasCov;
+  nh_.getParam("P_VDC_MeasCov", P_VDC_MeasCov);
   Eigen::VectorXd R_configured = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_MeasCov").as_double_array().size());
+    P_VDC_MeasCov.data(),
+    P_VDC_MeasCov.size());
 
   for (int i = 0; i < R_adaptive_.size(); ++i) {
-    double covariance_limit = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double();
-    double covariance_decay = param_manager_->get_parameter_value("P_VDC_MeasC_decay").as_double();
+    double covariance_limit, covariance_decay;
+    nh_.getParam("P_VDC_MeasC_lim", covariance_limit);
+    nh_.getParam("P_VDC_MeasC_decay", covariance_decay);
     if (i >= TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION) {
       covariance_limit /= 100;
       covariance_decay /= 5;
@@ -95,18 +92,20 @@ template <class TConfig> void
     std::string key = "valid_pos_" + std::to_string(i + 1);
     if (valid_map.at(key) != previous_valid_map_.at(key)) {
       // set all measurement covariances to the limit if a valid bit changes
+      double P_VDC_MeasC_lim;
+      nh_.getParam("P_VDC_MeasC_lim", P_VDC_MeasC_lim);
       R_(i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_X_M,
          i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_X_M)
-        = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double();
+        = P_VDC_MeasC_lim;
 
       R_(i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_Y_M,
          i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_Y_M)
-        = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double();
+        = P_VDC_MeasC_lim;
 
       if constexpr(TConfig::POS_MEASUREMENT_VECTOR_SIZE > 2) {
         R_(i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_Z_M,
            i * TConfig::POS_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_POS_Z_M)
-          = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double();
+          = P_VDC_MeasC_lim;
       }
     }
   }
@@ -115,25 +114,27 @@ template <class TConfig> void
   for (int i = 0; i < TConfig::NUM_ORIENTATION_MEASUREMENT; ++i) {
     std::string key = "valid_orientation_" + std::to_string(i + 1);
     if (valid_map.at(key) != previous_valid_map_.at(key)) {
+      double P_VDC_MeasC_lim;
+      nh_.getParam("P_VDC_MeasC_lim", P_VDC_MeasC_lim);
       // set all measurement covariances to the limit if a valid bit changes
       R_(TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
          + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_PSI_RAD,
          TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
          + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_PSI_RAD)
-        = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double() / 100;
+        = P_VDC_MeasC_lim / 100;
 
       if constexpr(TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE > 1) {
         R_(TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
            + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_PHI_RAD,
            TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
            + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_PHI_RAD)
-          = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double() / 100;
+          = P_VDC_MeasC_lim / 100;
 
         R_(TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
            + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_THETA_RAD,
            TConfig::MEASUREMENT_VECTOR_OFFSET_ORIENTATION
            + i * TConfig::ORIENTATION_MEASUREMENT_VECTOR_SIZE + TConfig::MEASUREMENT_PHI_RAD)
-          = param_manager_->get_parameter_value("P_VDC_MeasC_lim").as_double() / 100;
+          = P_VDC_MeasC_lim / 100;
       }
     }
   }
@@ -280,12 +281,12 @@ const Eigen::Matrix<double, TConfig::STATE_VECTOR_SIZE, TConfig::STATE_VECTOR_SI
 /**
  * @brief returns a pointer to the param manager
  *
- * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+ * @param[out]                  - ros::NodeHandle
  */
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   KFBase<TConfig>::get_param_handler(void)
 {
-  return param_manager_;
+  return nh_;
 }
 
 /**

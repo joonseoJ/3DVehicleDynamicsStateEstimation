@@ -17,10 +17,6 @@
 #include "tum_type_conversions_ros_cpp/tum_type_conversions.hpp"
 #include "tum_helpers_cpp/rotations.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager_composer.hpp"
-
 // State Estimation constants / template input
 #include "state_estimation_constants/EKF_2D.hpp"
 #include "state_estimation_constants/EKF_3D.hpp"
@@ -65,7 +61,7 @@ private:
   /**
    * @brief IAC Parameter Manager Composer to combine the parameters of a subclasses
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_composer_;
+   ros::NodeHandle nh_;
 
   /**
    * @brief Debug Container to output and publish the debug values of the state machine
@@ -179,7 +175,7 @@ public:
   /**
    * @brief Constructor
    */
-  explicit StateEstimation(const std::string & vehicle_model);
+  explicit StateEstimation(const std::string & vehicle_model, ros::NodeHandle nh);
 
   /**
    * @brief Steps the state estimation once
@@ -464,9 +460,9 @@ public:
   /**
    * @brief returns a pointer to the param manager composer
    *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                  - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void) override;
+   ros::NodeHandle get_param_handler(void) override;
 
   // output state estimation
   /**

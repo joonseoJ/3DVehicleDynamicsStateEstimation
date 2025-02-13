@@ -11,10 +11,6 @@
 // general constants
 #include "tum_helpers_cpp/constants.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
-
 // State Estimation constants / template input
 #include "state_estimation_constants/EKF_2D.hpp"
 #include "state_estimation_constants/EKF_3D.hpp"
@@ -38,9 +34,9 @@ class RefOrientationHandler
 {
 private:
   /**
-   * @brief IAC Parameter Manager
+   * @brief ROS Node Handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+   ros::NodeHandle nh_;
 
   // Variables
   /**
@@ -73,7 +69,7 @@ public:
   /**
    * @brief Constructor
    */
-  RefOrientationHandler();
+  RefOrientationHandler(ros::NodeHandle nh);
 
   /**
    * @brief Update the reference orientation based on the imu measurements and the vehicle odometry
@@ -115,9 +111,9 @@ public:
   /**
    * @brief returns a pointer to the param manager
    *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                  - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void);
+   ros::NodeHandle get_param_handler(void);
 };
 }  // namespace tam::core::state
 #include "state_estimation_cpp/submodules/ref_orientation_handler_impl.hpp"

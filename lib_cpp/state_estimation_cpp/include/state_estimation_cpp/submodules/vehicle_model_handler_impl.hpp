@@ -3,19 +3,14 @@
 #include "state_estimation_cpp/submodules/vehicle_model_handler.hpp"
 
 template <class TConfig> tam::core::state::VehicleModelHandler<TConfig>::VehicleModelHandler(
-  const std::string & vehicle_model)
+  const std::string & vehicle_model, ros::NodeHandle nh)
 {
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  nh_ = nh;
 
-  param_manager_->declare_parameter(
-    "tyreradius_front_m", 0.293475, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "tyreradius_rear_m", 0.307435, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "l_WheelbaseF_m", 1.724, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "l_WheelbaseR_m", 1.247, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("tyreradius_front_m", 0.293475);
+  nh_.setParam("tyreradius_rear_m", 0.307435);
+  nh_.setParam("l_WheelbaseF_m", 1.724);
+  nh_.setParam("l_WheelbaseR_m", 1.247);
 
   if (vehicle_model == "kinematic") {
     kinematic_model_ = true;
@@ -42,10 +37,11 @@ void tam::core::state::VehicleModelHandler<TConfig>::input_wheel_angular_velocit
   // calculate the average velocity over all wheels and apply the wheelspeed scale
   // if a vehicle model is configured
   if (!kinematic_model_) {
-    double average_absolute_velocity = ((wheel.front_left + wheel.front_right) *
-      param_manager_->get_parameter_value("tyreradius_front_m").as_double() +
-      (wheel.rear_left + wheel.rear_right) * 
-      param_manager_->get_parameter_value("tyreradius_rear_m").as_double()) / 4;
+    double tyreradius_front_m, tyreradius_rear_m
+    double average_absolute_velocity = (
+      (wheel.front_left + wheel.front_right) * tyreradius_front_m +
+      (wheel.rear_left + wheel.rear_right) * tyreradius_rear_m
+    ) / 4;
 
     // average velocity over all wheels in x-direction
     if (non_holonomic_model_) {
@@ -87,10 +83,12 @@ void tam::core::state::VehicleModelHandler<TConfig>::input_steering_angle(double
 {
   // update the side slip angle using a linear STM
   if (single_track_model_) {
-    side_slip_angle_ = std::atan(std::tan(steering_angle)
-      * param_manager_->get_parameter_value("l_WheelbaseR_m").as_double()
-      / (param_manager_->get_parameter_value("l_WheelbaseF_m").as_double()
-      + param_manager_->get_parameter_value("l_WheelbaseR_m").as_double()));
+    double l_WheelbaseF_m, l_WheelbaseR_m;
+    nh_.getParam("l_WheelbaseF_m", l_WheelbaseF_m);
+    nh_.getParam("l_WheelbaseR_m", l_WheelbaseR_m);
+    side_slip_angle_ = std::atan(
+      std::tan(steering_angle)* l_WheelbaseR_m / (l_WheelbaseF_m + l_WheelbaseR_m)
+    );
   }
 }
 
@@ -145,10 +143,10 @@ tam::types::ErrorLvl tam::core::state::VehicleModelHandler<TConfig>::get_status(
 /**
  * @brief returns a pointer to the param manager
  *
- * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+ * @param[out]                  - ros::NodeHandle
  */
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   tam::core::state::VehicleModelHandler<TConfig>::get_param_handler(void)
 {
-  return param_manager_;
+  return nh_;
 }

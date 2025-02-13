@@ -16,9 +16,6 @@
 // general constants
 #include "tum_helpers_cpp/constants.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-
 // Kalman Filter Base Class
 #include "state_estimation_cpp/filter/kalman_filter/kalman_filter_base.hpp"
 
@@ -106,7 +103,7 @@ public:
   using KFBase<TConfig>::outlier_bound_;
   using KFBase<TConfig>::mahalanobis_covariance_;
   using KFBase<TConfig>::fusion_vec_;
-  using KFBase<TConfig>::param_manager_;
+  using KFBase<TConfig>::nh_;
 };
 }  // namespace tam::core::state
 #include "state_estimation_cpp/filter/kalman_filter/ekf_impl.hpp"

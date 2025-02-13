@@ -12,10 +12,6 @@
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
-
 // TUM helpers
 #include "tum_helpers_cpp/numerical.hpp"
 
@@ -32,7 +28,7 @@ private:
   /**
    * @brief IAC Parameter Manager
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+  ros::NodeHandle nh_;
 
   // Variables
   /**
@@ -62,7 +58,7 @@ public:
   /**
    * @brief Constructor
    */
-  explicit VehicleModelHandler(const std::string & vehicle_model);
+  explicit VehicleModelHandler(const std::string & vehicle_model, ros::NodeHandle nh);
 
   /**
    * @brief Update the State Estimaion Wheelspeed Odometry input
@@ -114,9 +110,9 @@ public:
   /**
    * @brief returns a pointer to the param manager
    *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                  - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void);
+   ros::NodeHandle get_param_handler(void);
 };
 }  // namespace tam::core::state
 #include "state_estimation_cpp/submodules/vehicle_model_handler_impl.hpp"
