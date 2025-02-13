@@ -3,20 +3,27 @@
 #include "imu_handler/imu_handler.hpp"
 namespace tam::core::state
 {
-template <class TConfig> IMUHandler<TConfig>::IMUHandler()
+template <class TConfig> IMUHandler<TConfig>::IMUHandler(ros::NodeHandle nh)
 {
   // set the imu biases to zero
   imu_bias_.setZero();
 
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  // node handle
+  nh_ = nh;
 
   for (int i = 0; i < TConfig::NUM_IMU_MEASUREMENT + TConfig::NUM_BACKUP_IMU_MEASUREMENT; ++i) {
-    param_manager_->declare_parameter(
-      "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients",
-      std::vector<double>{0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
-      0.24522338986219644, 0.07722183762197628},
-      tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+    std::string param_name = "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients";
+    std::vector<double> filter_coefficients = {
+        0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
+        0.24522338986219644, 0.07722183762197628
+    };
+    nh_.setParam(param_name, filter_coefficients);
+
+    // param_manager_->declare_parameter(
+    //   "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients",
+    //   std::vector<double>{0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
+    //   0.24522338986219644, 0.07722183762197628},
+    //   tam::types::param::ParameterType::DOUBLE_ARRAY, "");
   }
 }
 
@@ -104,11 +111,21 @@ template <class TConfig> const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>
   if (initialize_filter_) {
     for (int i = 0; i < TConfig::NUM_IMU_MEASUREMENT + TConfig::NUM_BACKUP_IMU_MEASUREMENT; ++i) {
       // set the Filter Coefficients
-      Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
-        param_manager_->get_parameter_value("P_VDC_IMU" + std::to_string(i + 1)
-          + "_filter_coefficients").as_double_array().data(),
-        param_manager_->get_parameter_value("P_VDC_IMU" + std::to_string(i + 1)
-          + "_filter_coefficients").as_double_array().size());
+      std::string param_name = "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients";
+      std::vector<double> filter_coefficients;
+
+      if (nh_.getParam(param_name, filter_coefficients)) {
+        Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
+            filter_coefficients.data(), filter_coefficients.size());
+      } else {
+        ROS_ERROR_STREAM("Failed to get parameter: " << param_name);
+      }
+
+      // Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
+      //   param_manager_->get_parameter_value("P_VDC_IMU" + std::to_string(i + 1)
+      //     + "_filter_coefficients").as_double_array().data(),
+      //   param_manager_->get_parameter_value("P_VDC_IMU" + std::to_string(i + 1)
+      //     + "_filter_coefficients").as_double_array().size());
 
       for (int vec_pos = 0; vec_pos < TConfig::INPUT_VECTOR_SIZE; ++vec_pos) {
         filter_imu_[i * TConfig::INPUT_VECTOR_SIZE + vec_pos] =
@@ -143,9 +160,9 @@ template <class TConfig> void
   imu_bias_ = imu_bias;
 }
 
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   IMUHandler<TConfig>::get_param_handler(void)
 {
-  return param_manager_;
+  return nh_;
 }
 }  // namespace tam::core::state

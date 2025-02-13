@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <eigen3/Eigen/Dense>
+#include <ros/ros.h>
 
 // type definitions
 #include "tum_types_cpp/common.hpp"
@@ -14,10 +15,6 @@
 
 // general constants
 #include "tum_helpers_cpp/constants.hpp"
-
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
 
 // State Estimation constants / template input
 #include "state_estimation_constants/EKF_2D.hpp"
@@ -34,9 +31,9 @@ class IMUHandler
 {
 private:
   /**
-   * @brief IAC Parameter Manager
+   * @brief ros node handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+  ros::NodeHandle nh_;
 
   // Variables
   /**
@@ -77,7 +74,7 @@ public:
   /**
    * @brief Constructor
    */
-  IMUHandler();
+  IMUHandler(ros::NodeHandle nh);
 
   /**
    * @brief Update the raw input vector based on the imu measurements
@@ -126,13 +123,6 @@ public:
    */
   void set_sensor_bias(
     const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & imu_bias);
-
-  /**
-   * @brief returns a pointer to the param manager
-   *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
-   */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler(void);
 };
 }  // namespace tam::core::state
 #include "imu_handler/imu_handler_impl.hpp"
