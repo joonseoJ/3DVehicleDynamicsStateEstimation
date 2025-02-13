@@ -1,28 +1,19 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.0.2)
 
-# CONFIGURE PKG HERE
-# ==========================================
-set(PROJECT_NAME state_publisher)
-# ============================================
-# END OF CONFIGURATION
+project(state_publisher)
 
-project(${PROJECT_NAME})
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-
-install(DIRECTORY
-launch
-urdf
-DESTINATION share/${PROJECT_NAME}/
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
 )
 
-# section: GENERAL
-# ====================================================================
-ament_package()
+catkin_package()
+
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
+
+install(DIRECTORY
+  launch
+  urdf
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

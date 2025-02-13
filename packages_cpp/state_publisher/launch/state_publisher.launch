@@ -1,0 +1,19 @@
+<launch>
+ <!-- Name of the current URDF file -->
+ <arg name="urdf_name" default="urdf.xml"/>
+
+ <!-- Load URDF from file -->
+ <param name="robot_description" 
+        command="$(find xacro)/xacro --inorder '$(find state_publisher)/urdf/$(arg urdf_name)'"/>
+
+ <!-- Launch robot state publisher -->
+ <node name="TransformPublisher" 
+       pkg="robot_state_publisher"
+       type="robot_state_publisher"
+       ns="/core/state">
+   <param name="publish_frequency" value="0.1"/>
+   <param name="ignore_timestamp" value="false"/>
+   <param name="use_tf_static" value="true"/>
+ </node>
+
+</launch>
