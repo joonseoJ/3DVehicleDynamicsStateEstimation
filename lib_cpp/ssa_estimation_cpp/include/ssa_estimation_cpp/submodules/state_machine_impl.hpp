@@ -4,10 +4,9 @@
 
 namespace tam::core::ssa
 {
-template <class TConfig> StateMachine<TConfig>::StateMachine()
+template <class TConfig> StateMachine<TConfig>::StateMachine(ros::NodeHandle nh)
 {
-  // param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  nh_ = nh;
 
   // initialize the valid map
   // valid bits for the imu inputs
@@ -301,9 +300,9 @@ template <class TConfig> std::map<std::string, bool>
   return valid_map_;
 }
 
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   StateMachine<TConfig>::get_param_handler()
 {
-  return param_manager_;
+  return nh_;
 }
 }  // namespace tam::core::ssa

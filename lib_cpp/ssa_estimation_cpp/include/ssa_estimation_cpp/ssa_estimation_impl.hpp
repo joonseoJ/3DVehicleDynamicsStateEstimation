@@ -4,53 +4,42 @@
 namespace tam::core::ssa
 {
 template <class TConfig>
-SSAEstimation<TConfig>::SSAEstimation()
+SSAEstimation<TConfig>::SSAEstimation(ros::NodeHandle nh)
 {
   // initialize all subclasses
   state_machine_ = std::make_unique<tam::core::ssa::StateMachine<TConfig>>();
   imu_handler_ = std::make_unique<tam::core::state::IMUHandler<TConfig>>();
   kalman_filter_ = std::make_unique<tam::core::ssa::UKF<TConfig>>();
 
-  // param_manager
-  param_manager_composer_ = std::make_shared<tam::core::ParamManagerComposer>(
-    std::vector<std::shared_ptr<tam::interfaces::ParamManagerBase>>{
-      state_machine_->get_param_handler(), imu_handler_->get_param_handler(),
-      kalman_filter_->get_param_handler()});
+  nh_ = nh;
 
   // Squared distance threshold on acceleration input used to set the IMU input invalid
-  param_manager_composer_->declare_parameter(
-    "P_VDC_HardAccelerometerOutlierTH", 1000.0, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
 
   // Squared distance threshold on angular velocity input used to set the IMU input invalid
-  param_manager_composer_->declare_parameter(
-    "P_VDC_HardAngularVelocityOutlierTH", 1.0, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
 
   // Number of Consecutive hard outliers before changing the State Machine status
-  param_manager_composer_->declare_parameter(
-    "P_VDC_MaxConsecutiveIMUHardOutliers", 50, tam::types::param::ParameterType::INTEGER, "");
+  nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
 
   // allows overwrite the acceleration in z (vehicle coordinate frame)
   // with the vertical acceleration from the state estimation
   // Doing this can be necessary due the noise a_z imu measurements
-  param_manager_composer_->declare_parameter(
-    "P_VDC_Overwrite_Acceleration_Z", false, tam::types::param::ParameterType::BOOL, "");
-  param_manager_composer_->declare_parameter(
-    "P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_Overwrite_Acceleration_Z", false);
+  nh_.setParam("P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
   // post filter for yaw_rate filtering to get a smooth yaw acceleartion signal
-  param_manager_composer_->declare_parameter(
-    "P_VDC_yaw_rate_post_filter_coefficients",
-    std::vector<double>{0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-                        0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_yaw_rate_post_filter_coefficients", std::vector<double>{
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01}
+  );
 
   // set the state, input and measurent vector to zero
   x_out_.setZero();
@@ -65,9 +54,11 @@ SSAEstimation<TConfig>::SSAEstimation()
 template <class TConfig> void SSAEstimation<TConfig>::step()
 {
   // set the sensor biases for the imu handler
+  std::vector<double> P_VDC_InitialBias;
+  nh_.getParam("P_VDC_InitialBias", P_VDC_InitialBias);
   Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE> imu_bias = Eigen::Map<Eigen::VectorXd>(
-    param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().data(),
-    param_manager_composer_->get_parameter_value("P_VDC_InitialBias").as_double_array().size());
+    P_VDC_InitialBias.data(),
+    P_VDC_InitialBias.size());
   imu_handler_->set_sensor_bias(imu_bias);
 
   // preprocess the imu input vector containing linear accelerations and angular veocities
@@ -77,11 +68,11 @@ template <class TConfig> void SSAEstimation<TConfig>::step()
   // additionally filter yaw rate to use a smooth version for the derivate
   if (initialize_filter_) {
     // set the Filter Coefficients
+    std::vector<double> P_VDC_yaw_rate_post_filter_coefficients;
+    nh_.getParam("P_VDC_yaw_rate_post_filter_coefficients", P_VDC_yaw_rate_post_filter_coefficients);
     Eigen::VectorXd filter_coefficients = Eigen::Map<Eigen::VectorXd>(
-        param_manager_composer_->get_parameter_value(
-            "P_VDC_yaw_rate_post_filter_coefficients").as_double_array().data(),
-        param_manager_composer_->get_parameter_value(
-            "P_VDC_yaw_rate_post_filter_coefficients").as_double_array().size());
+        P_VDC_yaw_rate_post_filter_coefficients.data(),
+        P_VDC_yaw_rate_post_filter_coefficients.size());
     filter_yaw_rate_radps_ = std::make_unique<tam::core::state::FIR>(filter_coefficients);
     initialize_filter_ = false;
   }
@@ -120,10 +111,14 @@ template <class TConfig> void SSAEstimation<TConfig>::set_input_acceleration(
       - u_imu_.segment(TConfig::INPUT_AX_MPS2, 3).array().abs();
     Eigen::Vector<double,  3> outlier_distance_sqr;
     outlier_distance_sqr = outlier_distance.cwiseProduct(outlier_distance);
+
+    double P_VDC_HardAccelerometerOutlierTH;
+    nh_.getParam("P_VDC_HardAccelerometerOutlierTH", P_VDC_HardAccelerometerOutlierTH);
     if (
-      (param_manager_composer_->get_parameter_value("P_VDC_HardAccelerometerOutlierTH").as_double()
-         > outlier_distance_sqr.array()).all() || imu_num >= TConfig::NUM_IMU_MEASUREMENT ||
-         (0.0 == u_imu_.segment(TConfig::INPUT_AX_MPS2, 3).array()).all()) {
+      (P_VDC_HardAccelerometerOutlierTH > outlier_distance_sqr.array()).all() || 
+      imu_num >= TConfig::NUM_IMU_MEASUREMENT ||
+      (0.0 == u_imu_.segment(TConfig::INPUT_AX_MPS2, 3).array()).all()
+    ) {
       // set ax_mps2 of the raw input vector
       u_imu_raw_[imu_num * TConfig::INPUT_VECTOR_SIZE + TConfig::INPUT_AX_MPS2]
         = acceleration.acceleration_mps2.x;
@@ -168,10 +163,14 @@ template <class TConfig> void SSAEstimation<TConfig>::set_input_angular_velocity
       - u_imu_.segment(TConfig::INPUT_DPHI_RADPS, 3).array().abs();
     Eigen::Vector<double,  3> outlier_distance_sqr;
     outlier_distance_sqr = outlier_distance.cwiseProduct(outlier_distance);
+
+    double P_VDC_HardAngularVelocityOutlierTH;
+    nh_.getParam("P_VDC_HardAngularVelocityOutlierTH", P_VDC_HardAngularVelocityOutlierTH);
     if (
-      (param_manager_composer_->get_parameter_value("P_VDC_HardAngularVelocityOutlierTH").as_double()
-         > outlier_distance_sqr.array()).all() || imu_num >= TConfig::NUM_IMU_MEASUREMENT || (0.0 ==
-         u_imu_.segment(TConfig::INPUT_DPHI_RADPS, 3).array()).all()) {
+      (P_VDC_HardAngularVelocityOutlierTH > outlier_distance_sqr.array()).all() || 
+      imu_num >= TConfig::NUM_IMU_MEASUREMENT || 
+      (0.0 == u_imu_.segment(TConfig::INPUT_DPHI_RADPS, 3).array()).all()
+    ) {
       // set dphi_rads of the raw input vector
       u_imu_raw_[imu_num * TConfig::INPUT_VECTOR_SIZE + TConfig::INPUT_DPHI_RADPS]
         = odometry.angular_velocity_radps.x;
@@ -204,8 +203,8 @@ template <class TConfig> void SSAEstimation<TConfig>::set_input_angular_velocity
 template <class TConfig> void SSAEstimation<TConfig>::set_input_imu_status(
   const tam::types::ErrorLvl & status, const uint8_t imu_num)
 {
-  int max_outlier_threshold =
-    param_manager_composer_->get_parameter_value("P_VDC_MaxConsecutiveIMUHardOutliers").as_int();
+  int max_outlier_threshold;
+  nh_.getParam("P_VDC_MaxConsecutiveIMUHardOutliers", max_outlier_threshold);
   tam::types::ErrorLvl imu_status = status;
 
   // outlier rejection
@@ -386,9 +385,9 @@ template <class TConfig> void SSAEstimation<TConfig>:: set_orientation_timeout()
   state_machine_->set_orientation_status(tam::types::ErrorLvl::ERROR);
 }
 
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase> SSAEstimation<TConfig>::get_param_handler()
+template <class TConfig> ros::NodeHandle SSAEstimation<TConfig>::get_param_handler()
 {
-  return param_manager_composer_;
+  return nh_;
 }
 
 template <class TConfig> tam::types::control::Odometry SSAEstimation<TConfig>::get_odometry()

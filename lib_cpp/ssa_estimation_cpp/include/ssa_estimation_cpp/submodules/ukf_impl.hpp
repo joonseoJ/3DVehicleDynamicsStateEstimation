@@ -3,81 +3,46 @@
 #include "ssa_estimation_cpp/submodules/ukf.hpp"
 namespace tam::core::ssa
 {
-template <class TConfig> UKF<TConfig>::UKF()
+template <class TConfig> UKF<TConfig>::UKF(ros::NodeHandle nh)
 {
   // ensure that all states are set to zero
   x_.setZero();
   x_pred_.setZero();
-  // initialize param_manager
-  param_manager_ = std::make_shared<tam::core::ParamManager>();
+  // initialize node handle
+  nh_ = nh;
   // declare vehicle parameters
-  param_manager_->declare_parameter(
-    "P_VDC_mass_kg", double{800.00}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_Izz_kgm2", double{1000.00}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_l_front_m", double{1.724}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_l_rear_m", double{1.247}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tw_front_m", double{1.639}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tw_rear_m", double{1.524}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_rho_air_kgpm3", double{1.22}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_cL_front", double{-0.65}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_cL_rear", double{-0.8}, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_mass_kg", 800.00);
+  nh_.setParam("P_VDC_Izz_kgm2", 1000.00);
+  nh_.setParam("P_VDC_l_front_m", 1.724);
+  nh_.setParam("P_VDC_l_rear_m", 1.247);
+  nh_.setParam("P_VDC_tw_front_m", 1.639);
+  nh_.setParam("P_VDC_tw_rear_m", 1.524);
+  nh_.setParam("P_VDC_rho_air_kgpm3", 1.22);
+  nh_.setParam("P_VDC_cL_front", -0.65);
+  nh_.setParam("P_VDC_cL_rear", -0.8);
   // declare brake parameters
-  param_manager_->declare_parameter(
-    "P_VDC_d_brake_bore_front_m", double{0.0798}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_d_brake_bore_rear_m", double{0.0798}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_r_brake_pads_lever_front_m", double{0.1493}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_r_brake_pads_lever_rear_m", double{0.1493}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_mue_brakes_front", double{0.55}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_mue_brakes_rear", double{0.55}, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_d_brake_bore_front_m", 0.0798);
+  nh_.setParam("P_VDC_d_brake_bore_rear_m", 0.0798);
+  nh_.setParam("P_VDC_r_brake_pads_lever_front_m", 0.1493);
+  nh_.setParam("P_VDC_r_brake_pads_lever_rear_m", 0.1493);
+  nh_.setParam("P_VDC_mue_brakes_front", 0.55);
+  nh_.setParam("P_VDC_mue_brakes_rear", 0.55);
   // declare tire parameters
-  param_manager_->declare_parameter(
-    "P_VDC_rtire_front_m", double{0.2999}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_rtire_rear_m", double{0.3120}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tire_MF_long_front", std::vector<double>{15.0, 1.40, 1.55, 1.0},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tire_MF_long_rear", std::vector<double>{15.0, 1.40, 1.60, 1.00},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tire_MF_lat_front", std::vector<double>{10.0, 1.30, 1.40, 1.0},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-  param_manager_->declare_parameter(
-    "P_VDC_tire_MF_lat_rear", std::vector<double>{15.0, 1.40, 1.65, 1.00},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_rtire_front_m", 0.2999);
+  nh_.setParam("P_VDC_rtire_rear_m", 0.3120);
+  nh_.setParam("P_VDC_tire_MF_long_front", std::vector<double>{15.0, 1.40, 1.55, 1.0});
+  nh_.setParam("P_VDC_tire_MF_long_rear", std::vector<double>{15.0, 1.40, 1.60, 1.00});
+  nh_.setParam("P_VDC_tire_MF_lat_front", std::vector<double>{10.0, 1.30, 1.40, 1.0});
+  nh_.setParam("P_VDC_tire_MF_lat_rear", std::vector<double>{15.0, 1.40, 1.65, 1.00});
   // declare parameters for sigma point distribution
-  param_manager_->declare_parameter(
-    "P_VDC_alpha", double{0.001}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_beta", double{2.0}, tam::types::param::ParameterType::DOUBLE, "");
-  param_manager_->declare_parameter(
-    "P_VDC_kappa", double{0.0}, tam::types::param::ParameterType::DOUBLE, "");
+  nh_.setParam("P_VDC_alpha", 0.001);
+  nh_.setParam("P_VDC_beta", 2.0);
+  nh_.setParam("P_VDC_kappa", 0.0);
   // declare parameters containing the initial covariance matrices
-  param_manager_->declare_parameter(
-    "P_VDC_P_Init",
-    std::vector<double>{0.5, 0.0004}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
-  param_manager_->declare_parameter(
-    "P_VDC_ProcessCov_Q",
-    std::vector<double>{0.025, 0.00015}, tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_P_Init", std::vector<double>{0.5, 0.0004});
+  nh_.setParam("P_VDC_ProcessCov_Q", std::vector<double>{0.025, 0.00015});
   // R: v_stm, v_stm, FxTf, FxTr, FyTf, FyTr
-  param_manager_->declare_parameter(
-    "P_VDC_MeasCov_R",
-    std::vector<double>{1.00, 1.00, 200.0, 200.0, 150.0, 150.0},
-    tam::types::param::ParameterType::DOUBLE_ARRAY, "");
+  nh_.setParam("P_VDC_MeasCov_R", std::vector<double>{1.00, 1.00, 200.0, 200.0, 150.0, 150.0});
   // define auxilary variables
   initialize_ = true;
   vel_min_mps_ = 5.0;
@@ -86,42 +51,45 @@ template <class TConfig> UKF<TConfig>::UKF()
 template <class TConfig> void
   UKF<TConfig>::initialize()
 {
+  std::vector<double> P_VDC_P_Init, P_VDC_MeasCov_R, P_VDC_ProcessCov_Q;
+  nh_.getParam("P_VDC_P_Init", P_VDC_P_Init);
+  nh_.getParam("P_VDC_MeasCov_R", P_VDC_MeasCov_R);
+  nh_.getParam("P_VDC_ProcessCov_Q", P_VDC_ProcessCov_Q);
   // Set initial state covariance
-  P_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_P_Init").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_P_Init").as_double_array().size());
+  P_.diagonal() = Eigen::Map<Eigen::VectorXd>(P_VDC_P_Init.data(), P_VDC_P_Init.size());
   P_ = P_.array().square();
   // Set Kalman Filter Noise Matrices
-  R_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().size());
+  R_.diagonal() = Eigen::Map<Eigen::VectorXd>(P_VDC_MeasCov_R.data(), P_VDC_MeasCov_R.size());
   R_ = R_.array().square();
-  Q_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_ProcessCov_Q").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_ProcessCov_Q").as_double_array().size());
+  Q_.diagonal() = Eigen::Map<Eigen::VectorXd>(P_VDC_ProcessCov_Q.data(), P_VDC_ProcessCov_Q.size());
   Q_ = Q_.array().square();
+
+  double l_front_m, l_rear_m, alpha, kappa, beta;
+  nh_.getParam("P_VDC_l_front_m", l_front_m);
+  nh_.getParam("P_VDC_l_rear_m", l_rear_m);
+  nh_.getParam("P_VDC_alpha", alpha);
+  nh_.getParam("P_VDC_kappa", kappa);
+  nh_.getParam("P_VDC_beta", beta);
   // auxilary variables
-  l_m_ = param_manager_->get_parameter_value("P_VDC_l_front_m").as_double() +
-    param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double();
-  lambda_ = std::pow(param_manager_->get_parameter_value("P_VDC_alpha").as_double(), 2) *
-    (x_.size() + param_manager_->get_parameter_value("P_VDC_kappa").as_double()) - x_.size();
+  l_m_ = l_front_m + l_rear_m;
+  lambda_ = std::pow(alpha, 2) * (x_.size() + kappa) - x_.size();
 
   // Initialize Sigma Point Weights acc. to R. Van der Merwe
   const double c = 0.5 / (x_.size() + lambda_);
   W_mean_ = Eigen::VectorXd::Constant(2 * x_.size() + 1, c);
   W_cov_ = Eigen::VectorXd::Constant(2 * x_.size() + 1, c);
   W_mean_[0] = lambda_ / (x_.size() + lambda_);
-  W_cov_[0] = W_mean_[0] +
-    (1.0 - std::pow(param_manager_->get_parameter_value("P_VDC_alpha").as_double(), 2) +
-    param_manager_->get_parameter_value("P_VDC_beta").as_double());
+  W_cov_[0] = W_mean_[0] + (1.0 - std::pow(alpha, 2) + beta);
 }
 
 template <class TConfig> void
   UKF<TConfig>::predict(
     const Eigen::Ref<const Eigen::Vector<double, TConfig::PROCESS_VECTOR_SIZE>> & u)
 {
+  double rtire_front_m;
+  nh_.getParam("P_VDC_rtire_front_m", rtire_front_m);
   // calculate velocity according to wheel speed average of the front wheels
-  double vel_wheel_mps = (param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double() *
+  double vel_wheel_mps = (rtire_front_m *
       (u[TConfig::PROCESS_OMEGA_WHEEL_FL_RADPS] + u[TConfig::PROCESS_OMEGA_WHEEL_FR_RADPS]) / 2);
   if (initialize_) {
     // initialize the filter
@@ -133,11 +101,13 @@ template <class TConfig> void
   } else if (std::abs(vel_wheel_mps) <= 2.0) {
     // set the filter states to no side slip and wheel velocity
     // for velocities below 2 mps to avoid instabilities
+    std::vector<double> P_VDC_P_Init;
+    nh_.getParam("P_VDC_P_Init", P_VDC_P_Init);
     x_[0] = vel_wheel_mps;
     x_[1] = 0.0;
     P_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-        param_manager_->get_parameter_value("P_VDC_P_Init").as_double_array().data(),
-        param_manager_->get_parameter_value("P_VDC_P_Init").as_double_array().size());
+        P_VDC_P_Init.data(), P_VDC_P_Init.size()
+    );
     P_ = P_.array().square();
     init_time_s_ = 0.0;
   } else {
@@ -168,9 +138,11 @@ template <class TConfig> void
       P_pred_ += W_cov_[i] * residual * residual.transpose();
     }
     // Add Process Noise Q
+    std::vector<double> P_VDC_ProcessCov_Q;
+    nh_.getParam("P_VDC_ProcessCov_Q", P_VDC_ProcessCov_Q);
     Q_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-      param_manager_->get_parameter_value("P_VDC_ProcessCov_Q").as_double_array().data(),
-      param_manager_->get_parameter_value("P_VDC_ProcessCov_Q").as_double_array().size());
+      P_VDC_ProcessCov_Q.data(), P_VDC_ProcessCov_Q.size()
+    );
     Q_ = Q_.array().square();
     P_pred_ += Q_;
   }
@@ -295,28 +267,30 @@ template <class TConfig> void
   UKF<TConfig>::adaptR(
     const Eigen::Ref<const Eigen::Vector<double, TConfig::UPDATE_VECTOR_SIZE>> & z)
 {
+  std::vector<double> P_VDC_MeasCov_R;
+  nh_.getParam("P_VDC_MeasCov_R", P_VDC_MeasCov_R);
   // Only use wheel speed measurement of front axle for low slips
   // (this adaptation is only valid for rear wheel drive vehicles)
   if (z[TConfig::PROCESS_AX_MPS2] <= 0.0) {
       // Set Kalman Filter Noise Matrices to rely more on STM for braking maneuvers
       R_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().data(),
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().size());
+        P_VDC_MeasCov_R.data(), P_VDC_MeasCov_R.size()
+      );
       R_.diagonal()[TConfig::VIRTMEAS_V_STM_1_MPS] = 20.0;
       R_.diagonal()[TConfig::VIRTMEAS_V_STM_2_MPS] = 20.0;
       R_ = R_.array().square();
   } else {
       // Set Kalman Filter Noise Matrices to standard config for accelerating and rolling maneuvers
       R_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().data(),
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().size());
+        P_VDC_MeasCov_R.data(), P_VDC_MeasCov_R.size()
+      );
       R_ = R_.array().square();
   }
   if (x_[TConfig::STATE_VEL_MPS] <= 2.0) {
       // Set Kalman Filter Noise Matrices to rely more on the wheel speed encoders for low speeds
       R_.diagonal() = Eigen::Map<Eigen::VectorXd>(
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().data(),
-        param_manager_->get_parameter_value("P_VDC_MeasCov_R").as_double_array().size());
+        P_VDC_MeasCov_R.data(), P_VDC_MeasCov_R.size()
+      );
       R_.diagonal()[TConfig::VIRTMEAS_V_STM_1_MPS] = 0.01;
       R_.diagonal()[TConfig::VIRTMEAS_V_STM_2_MPS] = 0.01;
       R_ = R_.array().square();
@@ -357,49 +331,62 @@ template <class TConfig> Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE>
  UKF<TConfig>::get_virtual_measurement(
    const Eigen::Ref<const Eigen::Vector<double, TConfig::UPDATE_VECTOR_SIZE>> & z)
 {
-  Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE> z_out;
+  Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE> z_out
+
   // Calculate virtual Measurement Vector
   // speed at front axle middle point
   // acc. Bechtloff "Schätzung des Schwimmwinkels und fahrdynamischer Parameter
   // zur Verbesserung modellbasierter Fahrdynamikregelungen" p. 83
-  z_out[TConfig::VIRTMEAS_V_STM_1_MPS] = z[TConfig::UPDATE_OMEGA_WHEEL_FL_RADPS] *
-    param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double() +
-    std::cos(z[TConfig::UPDATE_DELTA_RAD]) * z[TConfig::UPDATE_DPSI_RADPS] *
-    param_manager_->get_parameter_value("P_VDC_tw_front_m").as_double() * 0.5;
-  z_out[TConfig::VIRTMEAS_V_STM_2_MPS] = z[TConfig::UPDATE_OMEGA_WHEEL_FR_RADPS] *
-    param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double() -
-    std::cos(z[TConfig::UPDATE_DELTA_RAD]) * z[TConfig::UPDATE_DPSI_RADPS] *
-    param_manager_->get_parameter_value("P_VDC_tw_front_m").as_double() * 0.5;
+  double P_VDC_rtire_front_m, P_VDC_tw_front_m;
+  nh_.getParam("P_VDC_rtire_front_m", P_VDC_rtire_front_m);
+  nh_.getParam("P_VDC_tw_front_m", P_VDC_tw_front_m);
+  z_out[TConfig::VIRTMEAS_V_STM_1_MPS] = z[TConfig::UPDATE_OMEGA_WHEEL_FL_RADPS] * P_VDC_rtire_front_m +
+    std::cos(z[TConfig::UPDATE_DELTA_RAD]) * z[TConfig::UPDATE_DPSI_RADPS] * P_VDC_tw_front_m * 0.5;
+  z_out[TConfig::VIRTMEAS_V_STM_2_MPS] = z[TConfig::UPDATE_OMEGA_WHEEL_FR_RADPS] * P_VDC_rtire_front_m -
+    std::cos(z[TConfig::UPDATE_DELTA_RAD]) * z[TConfig::UPDATE_DPSI_RADPS] * P_VDC_tw_front_m * 0.5;
+
   // STM Forces
   // longitudinal forces
-    z_out[TConfig::VIRTMEAS_FTX_F_N] =
-      -(2.0 * param_manager_->get_parameter_value("P_VDC_mue_brakes_front").as_double() * 
-      (z[TConfig::UPDATE_BRAKE_PRESSURE_FL_PA] + z[TConfig::UPDATE_BRAKE_PRESSURE_FL_PA]) / 2.0 *
-      (3.14 * std::pow(param_manager_->get_parameter_value("P_VDC_d_brake_bore_front_m").as_double(), 2) *
-      param_manager_->get_parameter_value("P_VDC_r_brake_pads_lever_front_m").as_double() / 4.0)) /
-      param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double();
-    z_out[TConfig::VIRTMEAS_FTX_R_N] =
-      (-(2.0 * param_manager_->get_parameter_value("P_VDC_mue_brakes_rear").as_double() *
+  double P_VDC_mue_brakes_front, P_VDC_d_brake_bore_front_m, P_VDC_r_brake_pads_lever_front_m;
+  double P_VDC_mue_brakes_rear, P_VDC_d_brake_bore_rear_m, P_VDC_r_brake_pads_lever_rear_m;
+  double P_VDC_rtire_rear_m;
+  nh_.getParam("P_VDC_mue_brakes_front", P_VDC_mue_brakes_front);
+  nh_.getParam("P_VDC_d_brake_bore_front_m", P_VDC_d_brake_bore_front_m);
+  nh_.getParam("P_VDC_r_brake_pads_lever_front_m", P_VDC_r_brake_pads_lever_front_m);
+  nh_.getParam("P_VDC_mue_brakes_rear", P_VDC_mue_brakes_rear);
+  nh_.getParam("P_VDC_d_brake_bore_rear_m", P_VDC_d_brake_bore_rear_m);
+  nh_.getParam("P_VDC_r_brake_pads_lever_rear_m", P_VDC_r_brake_pads_lever_rear_m);
+  nh_.getParam("P_VDC_rtire_rear_m", P_VDC_rtire_rear_m);
+
+  z_out[TConfig::VIRTMEAS_FTX_F_N] =
+    -(2.0 * P_VDC_mue_brakes_front * 
+    (z[TConfig::UPDATE_BRAKE_PRESSURE_FL_PA] + z[TConfig::UPDATE_BRAKE_PRESSURE_FL_PA]) / 2.0 *
+    (M_PI * std::pow(P_VDC_d_brake_bore_front_m, 2) * P_VDC_r_brake_pads_lever_front_m / 4.0)) /
+    P_VDC_rtire_front_m;
+  
+  z_out[TConfig::VIRTMEAS_FTX_R_N] =
+      (-(2.0 * P_VDC_mue_brakes_rear *
       (z[TConfig::UPDATE_BRAKE_PRESSURE_RL_PA] + z[TConfig::UPDATE_BRAKE_PRESSURE_RR_PA]) / 2.0 *
-      (3.14 * std::pow(param_manager_->get_parameter_value("P_VDC_d_brake_bore_rear_m").as_double(), 2) *
-      param_manager_->get_parameter_value("P_VDC_r_brake_pads_lever_rear_m").as_double() / 4.0)) +
+      (M_PI * std::pow(P_VDC_d_brake_bore_rear_m, 2) * P_VDC_r_brake_pads_lever_rear_m / 4.0)) +
       z[TConfig::UPDATE_DRIVETRAIN_TORQUE_NM]) /
-      param_manager_->get_parameter_value("P_VDC_rtire_rear_m").as_double();
+      P_VDC_rtire_rear_m;
+
   // lateral forces
   // acc. Bechtloff "Schätzung des Schwimmwinkels und fahrdynamischer Parameter
   // zur Verbesserung modellbasierter Fahrdynamikregelungen" p. 87
-  double FY_COG_N =
-    z[TConfig::UPDATE_AY_MPS2] * param_manager_->get_parameter_value("P_VDC_mass_kg").as_double();
-  double MZZ_COG_Nm =
-    z[TConfig::UPDATE_YAW_ACC_RADPS2] *
-    param_manager_->get_parameter_value("P_VDC_Izz_kgm2").as_double();
+  double P_VDC_mass_kg, P_VDC_Izz_kgm2, P_VDC_l_rear_m, P_VDC_l_front_m;
+  nh_.getParam("P_VDC_mass_kg", P_VDC_mass_kg);
+  nh_.getParam("P_VDC_Izz_kgm2", P_VDC_Izz_kgm2);
+  nh_.getParam("P_VDC_l_rear_m", P_VDC_l_rear_m);
+  nh_.getParam("P_VDC_l_front_m", P_VDC_l_front_m);
+
+  double FY_COG_N = z[TConfig::UPDATE_AY_MPS2] * P_VDC_mass_kg;
+  double MZZ_COG_Nm = z[TConfig::UPDATE_YAW_ACC_RADPS2] * P_VDC_Izz_kgm2;
   z_out[TConfig::VIRTMEAS_FTY_F_N] =
-    (1 / std::cos(z[TConfig::UPDATE_DELTA_RAD])) * ((FY_COG_N *
-    param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double() + MZZ_COG_Nm) / l_m_
-    - std::sin(z[TConfig::UPDATE_DELTA_RAD]) * z_out[TConfig::VIRTMEAS_FTX_F_N]);
+      (1 / std::cos(z[TConfig::UPDATE_DELTA_RAD])) * ((FY_COG_N * P_VDC_l_rear_m + MZZ_COG_Nm) / l_m_
+      - std::sin(z[TConfig::UPDATE_DELTA_RAD]) * z_out[TConfig::VIRTMEAS_FTX_F_N]);
   z_out[TConfig::VIRTMEAS_FTY_R_N] =
-    (FY_COG_N * param_manager_->get_parameter_value("P_VDC_l_front_m").as_double() -
-    MZZ_COG_Nm) / l_m_;
+      (FY_COG_N * P_VDC_l_front_m - MZZ_COG_Nm) / l_m_;
   return z_out;
 }
 
@@ -411,12 +398,13 @@ template <class TConfig> Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE>
   // variables for better readability
   double vel_mps = sigma_point[TConfig::STATE_VEL_MPS];
   double beta_rad = sigma_point[TConfig::STATE_BETA_RAD];
+  double P_VDC_l_front_m;
+  nh_.getParam("P_VDC_l_front_m", P_VDC_l_front_m);
   // calculate transformed sigma points acc. Bechtloff 2018 p. 83
   Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE> transformed_sigma_pnt;
   transformed_sigma_pnt[TConfig::VIRTMEAS_V_STM_1_MPS] =
     std::cos(z[TConfig::UPDATE_DELTA_RAD] - beta_rad) * vel_mps +
-    std::sin(beta_rad) * param_manager_->get_parameter_value("P_VDC_l_front_m").as_double() *
-      z[TConfig::UPDATE_DPSI_RADPS];
+    std::sin(beta_rad) * P_VDC_l_front_m * z[TConfig::UPDATE_DPSI_RADPS];
   transformed_sigma_pnt[TConfig::VIRTMEAS_V_STM_2_MPS] =
     transformed_sigma_pnt[TConfig::VIRTMEAS_V_STM_1_MPS];
   // calculate load and slip conditions of each tire
@@ -449,21 +437,28 @@ template <class TConfig> Eigen::Matrix<double, 4, 2> UKF<TConfig>::calc_tire_sta
     sigma_point[TConfig::STATE_VEL_MPS] * std::cos(sigma_point[TConfig::STATE_BETA_RAD]);
   double vel_COG_y_mps =
     sigma_point[TConfig::STATE_VEL_MPS] * std::sin(sigma_point[TConfig::STATE_BETA_RAD]);
+  double P_VDC_tw_front_m, P_VDC_tw_rear_m, P_VDC_l_front_m, P_VDC_l_rear_m, P_VDC_rtire_front_m, P_VDC_rtire_rear_m;
+  nh_.getParam("P_VDC_tw_front_m", P_VDC_tw_front_m);
+  nh_.getParam("P_VDC_tw_rear_m", P_VDC_tw_rear_m);
+  nh_.getParam("P_VDC_l_front_m", P_VDC_l_front_m);
+  nh_.getParam("P_VDC_l_rear_m", P_VDC_l_rear_m);
+  nh_.getParam("P_VDC_rtire_front_m", P_VDC_rtire_front_m);
+  nh_.getParam("P_VDC_rtire_rear_m", P_VDC_rtire_rear_m);
 
   // Calculate Wheel Velocities
   // Transform Vector to Tire Coordinate System
   // transformation matrices COG to wheel position
   Eigen::Vector<double, 4> transform_vx = {
-    - param_manager_->get_parameter_value("P_VDC_tw_front_m").as_double() / 2,
-    + param_manager_->get_parameter_value("P_VDC_tw_front_m").as_double() / 2,
-    - param_manager_->get_parameter_value("P_VDC_tw_rear_m").as_double() / 2,
-    + param_manager_->get_parameter_value("P_VDC_tw_rear_m").as_double() / 2
+    - P_VDC_tw_front_m / 2,
+    + P_VDC_tw_front_m / 2,
+    - P_VDC_tw_rear_m / 2,
+    + P_VDC_tw_rear_m / 2
     };
   Eigen::Vector<double, 4> transform_vy = {
-    + param_manager_->get_parameter_value("P_VDC_l_front_m").as_double(),
-    + param_manager_->get_parameter_value("P_VDC_l_front_m").as_double(),
-    - param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double(),
-    - param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double()
+    + P_VDC_l_front_m,
+    + P_VDC_l_front_m,
+    - P_VDC_l_rear_m,
+    - P_VDC_l_rear_m
     };
   Eigen::Vector<double, 4> vel_tire_x_mps = z[TConfig::PROCESS_DPSI_RADPS] * transform_vx +
     Eigen::VectorXd::Constant(4, vel_COG_x_mps);
@@ -483,10 +478,10 @@ template <class TConfig> Eigen::Matrix<double, 4, 2> UKF<TConfig>::calc_tire_sta
   // variables for better readability
   // tire_radii
   Eigen::Vector<double, 4> tire_radius_m = {
-    param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_rtire_front_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_rtire_rear_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_rtire_rear_m").as_double()
+    P_VDC_rtire_front_m,
+    P_VDC_rtire_front_m,
+    P_VDC_rtire_rear_m,
+    P_VDC_rtire_rear_m
   };
   // wheelspeed_measurements
   Eigen::Vector<double, 4> wheelspeeds_radps;
@@ -524,29 +519,37 @@ template <class TConfig> Eigen::Vector<double, 4> UKF<TConfig>::calc_tire_loads(
   double vel_COG_x_mps =
     sigma_point[TConfig::STATE_VEL_MPS] * std::cos(sigma_point[TConfig::STATE_BETA_RAD]);
   Eigen::Vector<double, 4> load_tire_N;
+  double P_VDC_cL_front, P_VDC_cL_rear, P_VDC_l_front_m, P_VDC_l_rear_m, P_VDC_mass_kg, P_VDC_rho_air_kgpm3;
+  nh_.getParam("P_VDC_cL_front", P_VDC_cL_front);
+  nh_.getParam("P_VDC_cL_rear", P_VDC_cL_rear);
+  nh_.getParam("P_VDC_l_front_m", P_VDC_l_front_m);
+  nh_.getParam("P_VDC_l_rear_m", P_VDC_l_rear_m);
+  nh_.getParam("P_VDC_mass_kg", P_VDC_mass_kg);
+  nh_.getParam("P_VDC_rho_air_kgpm3", P_VDC_rho_air_kgpm3);
+
   // Calculate Vertical Tire Loads
   // variables for better readability
   // aerodynamic lift coefficient
   Eigen::Vector<double, 4> lift_coeff = {
-    param_manager_->get_parameter_value("P_VDC_cL_front").as_double(),
-    param_manager_->get_parameter_value("P_VDC_cL_front").as_double(),
-    param_manager_->get_parameter_value("P_VDC_cL_rear").as_double(),
-    param_manager_->get_parameter_value("P_VDC_cL_rear").as_double()
+    P_VDC_cL_front,
+    P_VDC_cL_front,
+    P_VDC_cL_rear,
+    P_VDC_cL_rear
   };
   // wheel base transform to calculate the static load distribution
   Eigen::Vector<double, 4> wheel_base_transform = {
-    param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_l_rear_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_l_front_m").as_double(),
-    param_manager_->get_parameter_value("P_VDC_l_front_m").as_double()
+    P_VDC_l_rear_m,
+    P_VDC_l_rear_m,
+    P_VDC_l_front_m,
+    P_VDC_l_front_m
   };
 
   for (int i = 0; i < load_tire_N.size(); ++i) {
     // static load distribution and aerodynamic load
     load_tire_N(i) =
-      (param_manager_->get_parameter_value("P_VDC_mass_kg").as_double() *
+      (P_VDC_mass_kg *
       z[TConfig::PROCESS_AZ_MPS2] * wheel_base_transform(i) / l_m_ -
-      0.5 * param_manager_->get_parameter_value("P_VDC_rho_air_kgpm3").as_double() *
+      0.5 * P_VDC_rho_air_kgpm3 *
       lift_coeff(i) * 1.00 * vel_COG_x_mps * vel_COG_x_mps) / 2.0;
   }
   return load_tire_N;
@@ -558,20 +561,25 @@ template <class TConfig> Eigen::Vector<double, 6> UKF<TConfig>::calc_axle_forces
   const Eigen::Ref<const Eigen::Vector<double, 4>> & load_tire_N)
 {
   Eigen::Vector<double, 6> axle_forces;
+  std::vector<double> P_VDC_tire_MF_long_front, P_VDC_tire_MF_long_rear, P_VDC_tire_MF_lat_front, P_VDC_tire_MF_lat_rear;
+  nh_.getParam("P_VDC_tire_MF_long_front", P_VDC_tire_MF_long_front);
+  nh_.getParam("P_VDC_tire_MF_long_rear", P_VDC_tire_MF_long_rear);
+  nh_.getParam("P_VDC_tire_MF_lat_front", P_VDC_tire_MF_lat_front);
+  nh_.getParam("P_VDC_tire_MF_lat_rear", P_VDC_tire_MF_lat_rear);
 
   // auxilary variables for better readability
   Eigen::VectorXd MF_front_long = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_tire_MF_long_front").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_tire_MF_long_front").as_double_array().size());
+    P_VDC_tire_MF_long_front.data(),
+    P_VDC_tire_MF_long_front.size());
   Eigen::VectorXd MF_rear_long = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_tire_MF_long_rear").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_tire_MF_long_rear").as_double_array().size());
+    P_VDC_tire_MF_long_rear.data(),
+    P_VDC_tire_MF_long_rear.size());
   Eigen::VectorXd MF_front_lat = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_tire_MF_lat_front").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_tire_MF_lat_front").as_double_array().size());
+    P_VDC_tire_MF_lat_front.data(),
+    P_VDC_tire_MF_lat_front.size());
   Eigen::VectorXd MF_rear_lat = Eigen::Map<Eigen::VectorXd>(
-    param_manager_->get_parameter_value("P_VDC_tire_MF_lat_rear").as_double_array().data(),
-    param_manager_->get_parameter_value("P_VDC_tire_MF_lat_rear").as_double_array().size());
+    P_VDC_tire_MF_lat_rear.data(),
+    P_VDC_tire_MF_lat_rear.size());
 
   // axle load calculation
   double load_axle_front_N = load_tire_N[TConfig::FRONT_LEFT] + load_tire_N[TConfig::FRONT_RIGHT];
@@ -640,10 +648,10 @@ template <class TConfig> Eigen::Matrix<double, 2, 2>
   return J * P * J.transpose();
 }
 
-template <class TConfig> std::shared_ptr<tam::interfaces::ParamManagerBase>
+template <class TConfig> ros::NodeHandle
   UKF<TConfig>::get_param_handler()
 {
-  return param_manager_;
+  return nh_;
 }
 
 template <class TConfig> std::map<std::string, double>

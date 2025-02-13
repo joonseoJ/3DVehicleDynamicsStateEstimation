@@ -8,14 +8,11 @@
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include <algorithm>
+#include <ros/ros.h>
 
 // type definitions
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
-
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
 
 // general constants
 #include "tum_helpers_cpp/constants.hpp"
@@ -157,15 +154,12 @@ public:
  Eigen::Matrix<double, TConfig::STATE_VECTOR_SIZE,
     2 * TConfig::STATE_VECTOR_SIZE + 1> sigmaPoints_pred_;
 
- /** 
- * @brief Pointer on the param manager
- */
- std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+ ros::NodeHandle nh_;
 
 /**
  * @brief Constructor
  */
-UKF();
+UKF(ros::NodeHandle nh);
 /**
  * @brief Initialization of the UKF
  *  
@@ -341,7 +335,7 @@ Eigen::Matrix<double, 2, 2> get_linear_velocity_covariance();
 /**
  * @brief Get pointer on param manager
  */
-std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler();
+ros::NodeHandle get_param_handler();
 
 /**
  * @brief get all debug values of the kalman filter

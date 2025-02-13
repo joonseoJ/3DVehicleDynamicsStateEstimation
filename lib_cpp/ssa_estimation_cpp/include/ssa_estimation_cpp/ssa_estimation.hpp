@@ -17,10 +17,6 @@
 #include "tum_helpers_cpp/rotations.hpp"
 #include "tum_type_conversions_ros_cpp/tum_type_conversions.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager_composer.hpp"
-
 // SSA Estimation Base Class
 #include "ssa_estimation_base/ssa_estimation_base.hpp"
 
@@ -134,7 +130,7 @@ public:
   /**
    * @brief Constructor
    */
-  SSAEstimation();
+  SSAEstimation(ros::NodeHandle nh);
 
   /**
    * @brief Steps the side slip angle estimation once

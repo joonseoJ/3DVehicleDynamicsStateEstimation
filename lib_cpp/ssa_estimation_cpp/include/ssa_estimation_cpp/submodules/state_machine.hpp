@@ -12,10 +12,6 @@
 #include "tum_types_cpp/common.hpp"
 #include "tum_types_cpp/control.hpp"
 
-// Param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager.hpp"
-
 // SSA Estimation constants / template input
 #include "ssa_estimation_constants/UKF_STM.hpp"
 
@@ -53,15 +49,15 @@ private:
   bool feasable_output_{false};
 
   /**
-   * @brief IAC Parameter Manager
+   * @brief ROS node handle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+   ros::NodeHandle nh_;
 
 public:
   /**
    * @brief Constructor
    */
-  StateMachine();
+  StateMachine(ros::NodeHandle nh);
 
   /**
    * @brief Update the State Machine
@@ -196,9 +192,9 @@ public:
   /**
    * @brief returns a pointer to the param manager
    *
-   * @param[out]                          - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                          - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler();
+   ros::NodeHandle get_param_handler();
 };
 }  // namespace tam::core::ssa
 # include "ssa_estimation_cpp/submodules/state_machine_impl.hpp"
