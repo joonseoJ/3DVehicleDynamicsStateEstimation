@@ -45,4 +45,4 @@ struct AccelerationwithCovariances
   (x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis) */
   std::array<double, 36> acceleration_covariance;  //  Row Major Matrix Representation
 };
-};  // namespace tam::types::control
+}  // namespace tam::types::control

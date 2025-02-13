@@ -107,7 +107,7 @@ struct DataPerWheel
   OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON(operator>, >)
   OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON(operator<=, <=)
   OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON(operator>=, >=)
-  OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON(operator<=>, <=>)
+  // OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON(operator<=>, <=>)
 #undef OVERLOAD_OPERATOR_COMPONENT_WISE_COMPARISON
   // Make type iterable
   // ================================================================================
@@ -138,30 +138,32 @@ struct DataPerWheel
   }
   // Addition function for bool overload
   // ======================================================
-  DataPerWheel<bool> operator!() const requires(std::is_same_v<T, bool>)
-  {
-    return {!front_left, !front_right, !rear_left, !rear_right};
+  DataPerWheel<bool> operator!() const {
+    static_assert(std::is_same_v<T, bool>, "T must be bool");  // T가 bool인지 확인
+    return { !front_left, !front_right, !rear_left, !rear_right };
   }
   DataPerWheel<bool> operator&&(const DataPerWheel<bool> & other) const
-    requires(std::is_same_v<T, bool>)
   {
+    static_assert(std::is_same_v<T, bool>, "T must be bool");
     return {
       front_left && other.front_left, front_right && other.front_right,
       rear_left && other.rear_left, rear_right && other.rear_right};
   }
   DataPerWheel<bool> operator||(const DataPerWheel<bool> & other) const
-    requires(std::is_same_v<T, bool>)
   {
+    static_assert(std::is_same_v<T, bool>, "T must be bool");
     return {
       front_left || other.front_left, front_right || other.front_right,
       rear_left || other.rear_left, rear_right || other.rear_right};
   }
-  bool all() const requires(std::is_same_v<T, bool>)
+  bool all() const
   {
+    static_assert(std::is_same_v<T, bool>, "T must be bool");
     return (front_left && front_right && rear_left && rear_right);
   }
-  bool any() const requires(std::is_same_v<T, bool>)
+  bool any() const
   {
+    static_assert(std::is_same_v<T, bool>, "T must be bool");
     return (front_left || front_right || rear_left || rear_right);
   }
 };
