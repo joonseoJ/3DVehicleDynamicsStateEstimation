@@ -1,2 +1,2 @@
-builtin_interfaces/Time stamp
+time stamp
 float32 steering_tire_angle

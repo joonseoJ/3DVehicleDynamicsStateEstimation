@@ -1,2 +1,2 @@
-builtin_interfaces/Time stamp
-msgs/TUMFloat64PerWheel data
+time stamp
+TUMFloat64PerWheel data
