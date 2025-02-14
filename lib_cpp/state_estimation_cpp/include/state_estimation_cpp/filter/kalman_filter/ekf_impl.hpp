@@ -4,9 +4,10 @@
 
 namespace tam::core::state
 {
-template <typename TConfig> EKF<TConfig>::EKF()
+template <typename TConfig> EKF<TConfig>::EKF(ros::NodeHandle nh): KFBase<TConfig>(nh)
 {
-  if constexpr (!ekf::HasStateThetaRad<TConfig>)
+  nh_ = nh;
+  if constexpr (!ekf::HasStateThetaRad<TConfig>::value)
   {
     // Initialize EKF in 2D
     // ensure that all matrices are set to zero
@@ -182,7 +183,7 @@ template <class TConfig> void EKF<TConfig>::set_covariance_matricies(void)
 template <typename TConfig> void EKF<TConfig>::predict(
   const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u)
 {
-  if constexpr (!ekf::HasStateThetaRad<TConfig>) {
+  if constexpr (!ekf::HasStateThetaRad<TConfig>::value) {
     // Prediction Step of the 2D EKF
     // define the following functions for better readability
     // previous state vector
@@ -547,7 +548,7 @@ template <typename TConfig>
 std::map<std::string, double> EKF<TConfig>::get_debug(void)
 {
   std::map<std::string, double> debug_output;
-  if constexpr (!ekf::HasStateThetaRad<TConfig>)
+  if constexpr (!ekf::HasStateThetaRad<TConfig>::value)
   {
     // get the debug outputs of the 2D EKF
 

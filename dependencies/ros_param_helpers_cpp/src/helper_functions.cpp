@@ -2,7 +2,7 @@
 #include "ros_param_helpers_cpp/helper_functions.hpp"
 
 #include <filesystem>
-namespace tam::ros
+namespace tam::ROS
 {
 void load_overwrites_from_yaml(
   rclcpp::Node * node_instance, const std::string & path, const std::string & namesp,
@@ -183,4 +183,4 @@ void validate_param_overrides(int argc, char ** argv, rclcpp::Node * node)
     }
   }
 }
-}  // namespace tam::ros
+}  // namespace tam::ROS

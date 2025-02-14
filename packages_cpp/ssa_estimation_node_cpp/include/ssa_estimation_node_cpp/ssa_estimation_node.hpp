@@ -110,10 +110,10 @@ private:
   /**
    * @brief array containing all debug channels
    */
-  std::array<tam::ros::DebugPublisher, debug_channels::NUM_DEBUG_CHANNELS>
+  std::array<tam::ROS::DebugPublisher, debug_channels::NUM_DEBUG_CHANNELS>
     debug_channel_publishers_ = {
-      tam::ros::DebugPublisher(this, "state_machine"),
-      tam::ros::DebugPublisher(this, "kalman_filter"),
+      tam::ROS::DebugPublisher(this, "state_machine"),
+      tam::ROS::DebugPublisher(this, "kalman_filter"),
     };
 
   // Publisher

@@ -37,7 +37,7 @@ void tam::core::state::VehicleModelHandler<TConfig>::input_wheel_angular_velocit
   // calculate the average velocity over all wheels and apply the wheelspeed scale
   // if a vehicle model is configured
   if (!kinematic_model_) {
-    double tyreradius_front_m, tyreradius_rear_m
+    double tyreradius_front_m, tyreradius_rear_m;
     double average_absolute_velocity = (
       (wheel.front_left + wheel.front_right) * tyreradius_front_m +
       (wheel.rear_left + wheel.rear_right) * tyreradius_rear_m

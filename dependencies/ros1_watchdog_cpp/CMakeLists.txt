@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(state_estimation_base)
+project(ros1_watchdog_cpp)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,13 +12,23 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS
  roscpp
+ std_msgs
+ diagnostic_msgs
+ msgs
+ tum_helpers_cpp
  tum_types_cpp
+ tum_type_conversions_ros_cpp
 )
 
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES ${PROJECT_NAME}
- CATKIN_DEPENDS tum_types_cpp roscpp
+ CATKIN_DEPENDS 
+   roscpp
+   diagnostic_msgs
+   tum_types_cpp
+   tum_helpers_cpp
+   tum_type_conversions_ros_cpp
 )
 
 include_directories(
@@ -26,10 +36,12 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME} INTERFACE)
-target_include_directories(${PROJECT_NAME} INTERFACE
- ${catkin_INCLUDE_DIRS}
- ${CMAKE_CURRENT_SOURCE_DIR}/include
+add_library(${PROJECT_NAME}
+ src/topic_watchdog.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+ ${catkin_LIBRARIES}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/

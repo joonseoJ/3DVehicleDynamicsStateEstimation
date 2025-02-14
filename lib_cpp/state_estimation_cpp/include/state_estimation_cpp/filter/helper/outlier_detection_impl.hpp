@@ -71,13 +71,13 @@ inline Eigen::VectorXd outlier_detection::box_outlier_detection(
  * 
  * @param[out]                  - Residual vector without outliers
  */
-template <typename TConfig>
+template <typename TConfig,
+          std::enable_if_t<!tam::core::state::outlier_detection::HasStateThetaRad<TConfig>::value, int> = 0>
 inline Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>
 outlier_detection::mahalanobis_outlier_detection(
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> residuals,
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> covariance_diag,
   const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x)
-  requires (!tam::core::state::outlier_detection::HasStateThetaRad<TConfig>)
 {
   Eigen::Matrix<double, tam::core::state::EKF_2D::MEASUREMENT_VECTOR_SIZE,
                 tam::core::state::EKF_2D::MEASUREMENT_VECTOR_SIZE> covariance;
@@ -173,13 +173,13 @@ outlier_detection::mahalanobis_outlier_detection(
  * 
  * @param[out]                  - Residual vector without outliers
  */
-template <typename TConfig>
+template <typename TConfig,
+          std::enable_if_t<tam::core::state::outlier_detection::HasStateThetaRad<TConfig>::value, int> = 0>
 inline Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>
 outlier_detection::mahalanobis_outlier_detection(
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> residuals,
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> covariance_diag,
   const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x)
-  requires (tam::core::state::outlier_detection::HasStateThetaRad<TConfig>)
 {
   Eigen::Matrix<double, TConfig::MEASUREMENT_VECTOR_SIZE,
                 TConfig::MEASUREMENT_VECTOR_SIZE> covariance;

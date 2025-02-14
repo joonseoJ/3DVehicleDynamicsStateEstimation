@@ -71,6 +71,27 @@ tam::types::control::AccelerationwithCovariances acceleration_with_covariances_t
   return acceleration;
 }
 
+geometry_msgs::AccelWithCovarianceStamped accel_with_covariance_stamped_msg_from_type(
+  const tam::types::control::AccelerationwithCovariances& acceleration)
+{
+  geometry_msgs::AccelWithCovarianceStamped msg;
+  msg.accel.accel.linear.x = acceleration.acceleration_mps2.x;
+  msg.accel.accel.linear.y = acceleration.acceleration_mps2.y;
+  msg.accel.accel.linear.z = acceleration.acceleration_mps2.z;
+
+  msg.accel.accel.angular.x = acceleration.angular_acceleration_radps2.x;
+  msg.accel.accel.angular.y = acceleration.angular_acceleration_radps2.y;
+  msg.accel.accel.angular.z = acceleration.angular_acceleration_radps2.z;
+
+  std::copy(
+    acceleration.acceleration_covariance.begin(), 
+    acceleration.acceleration_covariance.end(), 
+    msg.accel.covariance.begin()
+  );
+
+  return msg;
+}
+
 tam::types::control::Odometry odometry_type_from_msg(const nav_msgs::Odometry& msg)
 {
   tam::types::control::Odometry odometry;
@@ -120,6 +141,26 @@ nav_msgs::Odometry odometry_msg_from_type(const tam::types::control::Odometry& o
   // odometry_msg.twist.covariance = odometry.velocity_covariance;
   std::copy(odometry.velocity_covariance.begin(), odometry.velocity_covariance.end(), odometry_msg.twist.covariance.begin());
   return odometry_msg;
+}
+
+tam::types::control::Odometry odometry_type_from_imu_msg(
+  const sensor_msgs::Imu::ConstPtr& msg) 
+{
+  tam::types::control::Odometry odometry;
+  odometry.angular_velocity_radps.x = msg->angular_velocity.x;
+  odometry.angular_velocity_radps.y = msg->angular_velocity.y;
+  odometry.angular_velocity_radps.z = msg->angular_velocity.z;
+  return odometry;
+}
+
+tam::types::control::AccelerationwithCovariances acceleration_with_covariances_type_from_imu_msg(
+    const sensor_msgs::Imu::ConstPtr& msg)
+{
+  tam::types::control::AccelerationwithCovariances acceleration;
+  acceleration.acceleration_mps2.x = msg->linear_acceleration.x;
+  acceleration.acceleration_mps2.y = msg->linear_acceleration.y;
+  acceleration.acceleration_mps2.z = msg->linear_acceleration.z;
+  return acceleration;
 }
 }  // namespace tam::type_conversions
 

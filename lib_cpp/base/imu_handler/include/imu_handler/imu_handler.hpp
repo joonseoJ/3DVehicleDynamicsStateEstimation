@@ -115,6 +115,8 @@ public:
    */
   void set_road_angles(const tam::types::common::Vector3D<double> & road_angles);
 
+  ros::NodeHandle get_param_handler(void);
+
   /**
    * @brief set the sensor biases to be compensated in the averaged output vector
    * 

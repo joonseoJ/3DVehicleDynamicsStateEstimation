@@ -5,9 +5,10 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <functional>
 
 // ROS
-#include <rclcpp/rclcpp.hpp>
+#include <ros/ros.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include "tf2_ros/transform_broadcaster.h"
@@ -29,17 +30,17 @@
 #include "tum_type_conversions_ros_cpp/orientation.hpp"
 
 // messages
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-#include "msgs/msg/tum_float64_per_wheel.hpp"
-#include "msgs/msg/tum_float64_per_wheel_stamped.hpp"
-#include "msgs/msg/steering_report.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "std_msgs/msg/float64.hpp"
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <msgs/TUMFloat64PerWheel.h>
+#include <msgs/TUMFloat64PerWheelStamped.h>
+#include <msgs/SteeringReport.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/AccelWithCovarianceStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <std_msgs/Float64.h>
 
 // state estimation
 #include "state_estimation_base/state_estimation_base.hpp"
@@ -49,16 +50,16 @@
 #include "state_estimation_constants/EKF_2D.hpp"
 #include "state_estimation_constants/EKF_3D.hpp"
 
-// param manager
-#include "param_manager_cpp/param_manager_base.hpp"
-#include "param_manager_cpp/param_manager_composer.hpp"
-#include "ros_param_helpers_cpp/helper_functions.hpp"
+// // param manager
+// #include "param_manager_cpp/param_manager_base.hpp"
+// #include "param_manager_cpp/param_manager_composer.hpp"
+// #include "ros_param_helpers_cpp/helper_functions.hpp"
 
-// debug helper
+// // debug helper
 #include "ros_debug_helpers_cpp/debug_publisher.hpp"
 
-// topic watchdog
-#include "ros2_watchdog_cpp/topic_watchdog.hpp"
+// // topic watchdog
+#include "ros1_watchdog_cpp/topic_watchdog.hpp"
 
 // undef simulink macros
 #undef ERROR
@@ -66,12 +67,12 @@
 #undef OK
 
 template <class TConfig>
-class stateEstimationNode : public rclcpp::Node
+class stateEstimationNode
 {
 public:
   explicit stateEstimationNode(
     std::unique_ptr<tam::core::state::StateEstimationBase> && state_estimation,
-    const std::string vehicle_model, const rclcpp::NodeOptions & options);
+    const std::string vehicle_model, ros::NodeHandle nh);
 
 private:
   /**
@@ -91,15 +92,15 @@ private:
 
   // publisher function
   /**
-   * @brief publish odometry output of the state estimation as nav_msgs::msg::Odometry
+   * @brief publish odometry output of the state estimation as nav_msgs::Odometry
    */
-  void publish_odometry(rclcpp::Time time_pub);
+  void publish_odometry(ros::Time time_pub);
 
   /**
    * @brief publish linear acceleration output of the state estimation as
-   *        geometry_msgs::msg::AccelWithCovarianceStamped
+   *        geometry_msgs::AccelWithCovarianceStamped
    */
-  void publish_acceleration(rclcpp::Time time_pub);
+  void publish_acceleration(ros::Time time_pub);
 
   /**
    * @brief publish dynamic transforms:
@@ -129,26 +130,26 @@ private:
   void update_road_angles(const tam::types::control::Odometry & odometry);
 
   // Subscription callbacks sensors
-  void odometry_1_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void imu_1_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
-  void status_1_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg);
+  void odometry_1_callback(const nav_msgs::Odometry::ConstPtr msg);
+  void imu_1_callback(const sensor_msgs::Imu::ConstPtr msg);
+  void status_1_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr msg);
 
-  void odometry_2_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void imu_2_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
-  void status_2_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg);
+  void odometry_2_callback(const nav_msgs::Odometry::ConstPtr msg);
+  void imu_2_callback(const sensor_msgs::Imu::ConstPtr msg);
+  void status_2_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr msg);
 
-  void odometry_3_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void imu_3_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
-  void status_3_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg);
+  void odometry_3_callback(const nav_msgs::Odometry::ConstPtr msg);
+  void imu_3_callback(const sensor_msgs::Imu::ConstPtr msg);
+  void status_3_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr msg);
 
-  void wheelspeed_report_callback(const msgs::msg::TUMFloat64PerWheelStamped::SharedPtr msg);
-  void wheelspeed_status_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg);
+  void wheelspeed_report_callback(const msgs::TUMFloat64PerWheelStamped::ConstPtr msg);
+  void wheelspeed_status_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr msg);
 
-  void side_slip_estimation_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void side_slip_estimation_status_callback(const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg);
+  void side_slip_estimation_callback(const nav_msgs::Odometry::ConstPtr msg);
+  void side_slip_estimation_status_callback(const diagnostic_msgs::DiagnosticStatus::ConstPtr msg);
 
   void steering_report_callback(
-    const msgs::msg::SteeringReport::SharedPtr msg);
+    const msgs::SteeringReport::ConstPtr msg);
 
   // Timeout callback for the sensor subscription
   void odometry_1_timeout_callback(bool timeout, std::chrono::milliseconds timeout_now);
@@ -179,23 +180,27 @@ private:
   /**
    * @brief parameter manager
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
-  OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+  // std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_;
+  // OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+  ros::NodeHandle nh_;
 
   /**
    * @brief model update callback
    */
-  rclcpp::TimerBase::SharedPtr model_update_timer_;
+  ros::Timer model_update_timer_;
 
   /**
    * @brief topic watchdog
    */
   tam::core::TopicWatchdog::UniquePtr topic_watchdog_;
+  ros::Subscriber odom1_sub_;
+
 
   /**
    * @brief callback function queue
    */
   tam::core::function_queue<void()> callback_queue_;
+  ros::Timer timer_;
 
   /**
    * @brief tf2 transform broadcaster
@@ -205,7 +210,7 @@ private:
   /**
    * @brief tf2 transform listener
    */
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
   /**
@@ -231,26 +236,20 @@ private:
 
   // Publishers
   /**
-   * @brief nav_msgs::msg::Odometry publisher
+   * @brief nav_msgs::Odometry publisher
    */
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odometry_;
+  ros::Publisher pub_odometry_;
 
   /**
-   * @brief geometry_msgs::msg::AccelWithCovarianceStamped publisher
+   * @brief geometry_msgs::AccelWithCovarianceStamped publisher
    */
-  rclcpp::Publisher<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr pub_acceleration_;
+  ros::Publisher pub_acceleration_;
 
   /**
    * @brief array containing all debug channels
    */
-  std::array<tam::ros::DebugPublisher, debug_channels::NUM_DEBUG_CHANNELS>
-    debug_channel_publishers_ = {
-      tam::ros::DebugPublisher(this, "odometry_1"),
-      tam::ros::DebugPublisher(this, "odometry_2"),
-      tam::ros::DebugPublisher(this, "odometry_3"),
-      tam::ros::DebugPublisher(this, "state_machine"),
-      tam::ros::DebugPublisher(this, "kalman_filter"),
-    };
+  std::array<tam::ROS::DebugPublisher, debug_channels::NUM_DEBUG_CHANNELS>
+    debug_channel_publishers_;
 
   /**
    * @brief additional debug containers to publish the transformed odometry input

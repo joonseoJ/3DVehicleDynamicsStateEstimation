@@ -23,10 +23,18 @@ namespace tam::core::state
 namespace reforientationhandler
 {
 // auxilary concept to overload functions for 2D and 3D Filters
+// template <typename TConfig>
+// concept HasStateThetaRad = requires {
+//   {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
+// };
+
+// C++17 스타일로 concept 대체
+template <typename TConfig, typename = void>
+struct HasStateThetaRad : std::false_type {};  // 기본적으로 false
+
 template <typename TConfig>
-concept HasStateThetaRad = requires {
-  {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
-};
+struct HasStateThetaRad<TConfig, std::void_t<decltype(TConfig::STATE_THETA_RAD)>> 
+    : std::is_convertible<decltype(TConfig::STATE_THETA_RAD), const int&> {};  // 조건을 만족하면 true
 }  // namespace reforientationhandler
 
 template <typename TConfig>
@@ -84,15 +92,16 @@ public:
    *                                calculated reference angles
    */
   // Function Overload for 2D Filters
+  template <typename U = TConfig, std::enable_if_t<!reforientationhandler::HasStateThetaRad<U>::value, int> = 0>
   const tam::types::control::Odometry & update(
     const Eigen::Ref<const Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> & x,
-    const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u)
-    requires (!reforientationhandler::HasStateThetaRad<TConfig>);
+    const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u);
+
   // Function Overload for 3D Filters
+  template <typename U = TConfig, std::enable_if_t<reforientationhandler::HasStateThetaRad<U>::value, int> = 0>
   const tam::types::control::Odometry & update(
     const Eigen::Ref<const Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> & x,
-    const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u)
-    requires (reforientationhandler::HasStateThetaRad<TConfig>);
+    const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u);
 
   /**
    * @brief Get the current status (decide whether the reference angle should be fused)
@@ -101,11 +110,12 @@ public:
    *                                        current fusion status
    */
   // Function Overload for 2D Filters
-  tam::types::ErrorLvl get_status(void)
-  requires (!reforientationhandler::HasStateThetaRad<TConfig>);
+  template <typename U = TConfig, std::enable_if_t<!reforientationhandler::HasStateThetaRad<U>::value, int> = 0>
+  tam::types::ErrorLvl get_status(void);
+  
   // Function Overload for 3D Filters
-  tam::types::ErrorLvl get_status(void)
-  requires (reforientationhandler::HasStateThetaRad<TConfig>);
+  template <typename U = TConfig, std::enable_if_t<reforientationhandler::HasStateThetaRad<U>::value, int> = 0>
+  tam::types::ErrorLvl get_status(void);
 
 
   /**

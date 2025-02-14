@@ -48,10 +48,18 @@ namespace tam::core::state
 namespace stateestimation
 {
 // auxilary concept to overload functions for 2D and 3D Filters
+// template <typename TConfig>
+// concept HasStateThetaRad = requires {
+//     {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
+//   };
+
+// C++17 스타일로 concept 대체
+template <typename TConfig, typename = void>
+struct HasStateThetaRad : std::false_type {};  // 기본적으로 false
+
 template <typename TConfig>
-concept HasStateThetaRad = requires {
-    {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
-  };
+struct HasStateThetaRad<TConfig, std::void_t<decltype(TConfig::STATE_THETA_RAD)>> 
+    : std::is_convertible<decltype(TConfig::STATE_THETA_RAD), const int&> {};  // 조건을 만족하면 true
 }  // namespace stateestimation
 
 template <typename TConfig>

@@ -1,6 +1,9 @@
 // Copyright 2023 Simon Hoffmann
 #pragma once
 #include <vector>
+#include <ros/ros.h>
+#include <functional>
+
 namespace tam::core
 {
 /**
@@ -21,7 +24,7 @@ public:
    * @brief Execute all functions in the function_queue in the order of insertion.
    * 
    */
-  void call()
+  void call(const ros::TimerEvent& e)
   {
     for (const auto & func : functions) {
       func();
@@ -32,7 +35,7 @@ public:
    * 
    * @return std::function<T> of the call method.
    */
-  std::function<T> get_function_queue() { return std::bind(&function_queue::call, this); }
+  std::function<void(const ros::TimerEvent&)> get_function_queue() { return std::bind(&function_queue::call, this, std::placeholders::_1); }
 
 private:
   std::vector<std::function<T>> functions;

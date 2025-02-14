@@ -9,7 +9,7 @@
 #include "param_manager_cpp/param_manager_base.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "rclcpp/node_interfaces/node_parameters_interface.hpp"
-namespace tam::ros
+namespace tam::ROS
 {
 /// @brief Goes through all the parameters in param_manager and declares them as ROS Parameters
 /// @param node_instance Handle to the Node Instance
@@ -64,4 +64,4 @@ void load_overwrites_from_yaml(
 /// @param argv argv argument of main-function
 /// @param node pointer to node
 void validate_param_overrides(int argc, char ** argv, rclcpp::Node * node);
-}  // namespace tam::ros
+}  // namespace tam::ROS

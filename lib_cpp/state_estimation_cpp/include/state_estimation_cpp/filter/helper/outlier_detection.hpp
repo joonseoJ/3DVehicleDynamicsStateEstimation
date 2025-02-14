@@ -16,10 +16,19 @@
 namespace tam::core::state::outlier_detection
 {
 // auxilary concept to overload functions for 2D and 3D Filters
+// template <typename TConfig>
+// concept HasStateThetaRad = requires {
+//   {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
+// };
+
+// C++17 스타일로 concept 대체
+template <typename TConfig, typename = void>
+struct HasStateThetaRad : std::false_type {};  // 기본적으로 false
+
 template <typename TConfig>
-concept HasStateThetaRad = requires {
-  {TConfig::STATE_THETA_RAD } -> std::convertible_to<const int&>;
-};
+struct HasStateThetaRad<TConfig, std::void_t<decltype(TConfig::STATE_THETA_RAD)>> 
+    : std::is_convertible<decltype(TConfig::STATE_THETA_RAD), const int&> {};  // 조건을 만족하면 true
+
 
 /**
  * @brief Calculate the squared distance between a explict and the mean of a measurement
@@ -59,19 +68,19 @@ Eigen::VectorXd box_outlier_detection(const Eigen::VectorXd & residuals,
  * 
  * @param[out]                  - Residual vector without outliers
  */
-template <typename TConfig>
+template <typename TConfig,
+          std::enable_if_t<!HasStateThetaRad<TConfig>::value, int> = 0>
 Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE> mahalanobis_outlier_detection(
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> residuals,
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> covariance_diag,
-  const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x)
-  requires (!HasStateThetaRad<TConfig>);
+  const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x);
 
-template <typename TConfig>
+template <typename TConfig,
+          std::enable_if_t<HasStateThetaRad<TConfig>::value, int> = 0>
 Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE> mahalanobis_outlier_detection(
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> residuals,
   const Eigen::Ref<Eigen::Vector<double, TConfig::MEASUREMENT_VECTOR_SIZE>> covariance_diag,
-  const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x)
-  requires (HasStateThetaRad<TConfig>);
+  const Eigen::Ref<Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> x);
 
 }  // namespace tam::core::state::outlier_detection
 #include "state_estimation_cpp/filter/helper/outlier_detection_impl.hpp"

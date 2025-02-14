@@ -27,12 +27,12 @@ template <typename TConfig> RefOrientationHandler<TConfig>::RefOrientationHandle
  *                                calculated reference angles
  */
 template <typename TConfig>
+template <typename U, std::enable_if_t<!reforientationhandler::HasStateThetaRad<U>::value, int>>
 const tam::types::control::Odometry & RefOrientationHandler<TConfig>::update(
     [[maybe_unused]] const Eigen::Ref<const Eigen::Vector<double,
       TConfig::STATE_VECTOR_SIZE>> & x,
     [[maybe_unused]] const Eigen::Ref<const Eigen::Vector<double,
       TConfig::INPUT_VECTOR_SIZE>> & u)
-    requires (!reforientationhandler::HasStateThetaRad<TConfig>)
 {
   // it does not make sense to compute the reference angles in 2d thats why we just return 0
   return reference_orientation;
@@ -51,10 +51,10 @@ const tam::types::control::Odometry & RefOrientationHandler<TConfig>::update(
  *                                calculated reference angles
  */
 template <typename TConfig>
+template <typename U, std::enable_if_t<reforientationhandler::HasStateThetaRad<U>::value, int>>
 const tam::types::control::Odometry & RefOrientationHandler<TConfig>::update(
   const Eigen::Ref<const Eigen::Vector<double, TConfig::STATE_VECTOR_SIZE>> & x,
   const Eigen::Ref<const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>> & u)
-  requires (reforientationhandler::HasStateThetaRad<TConfig>)
 {
   // initialize the numerical differentiation
   if (first_iteration_) {
@@ -121,8 +121,8 @@ const tam::types::control::Odometry & RefOrientationHandler<TConfig>::update(
  *                                        current fusion status
  */
 template <typename TConfig>
+template <typename U, std::enable_if_t<!reforientationhandler::HasStateThetaRad<U>::value, int>>
 tam::types::ErrorLvl RefOrientationHandler<TConfig>::get_status(void)
-requires (!reforientationhandler::HasStateThetaRad<TConfig>)
 {
   // because we dont need the reference angles in 2d we always return a error
   return tam::types::ErrorLvl::ERROR;
@@ -135,8 +135,8 @@ requires (!reforientationhandler::HasStateThetaRad<TConfig>)
  *                                        current fusion status
  */
 template <typename TConfig>
+template <typename U, std::enable_if_t<reforientationhandler::HasStateThetaRad<U>::value, int>>
 tam::types::ErrorLvl RefOrientationHandler<TConfig>::get_status(void)
-requires (reforientationhandler::HasStateThetaRad<TConfig>)
 {
   if (!first_iteration_ && !second_iteration_) {
     return tam::types::ErrorLvl::OK;

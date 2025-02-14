@@ -14,9 +14,6 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
-
-  <run_depend>message_runtime</run_depend>
-  <run_depend>std_msgs</run_depend>
   
   <export>
     <build_type>catkin</build_type>

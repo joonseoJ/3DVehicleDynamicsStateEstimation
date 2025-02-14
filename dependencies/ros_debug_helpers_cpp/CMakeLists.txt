@@ -1,52 +1,48 @@
-cmake_minimum_required(VERSION 3.12)
-set(PROJECT_NAME ros_debug_helpers_cpp)
-project(${PROJECT_NAME})
+cmake_minimum_required(VERSION 3.0.2)
+project(ros_debug_helpers_cpp)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-std=c++17)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+ add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(tum_types_cpp REQUIRED)
-find_package(msgs REQUIRED)
-
-
-add_library(${PROJECT_NAME} SHARED
-  src/debug_publisher.cpp
+find_package(catkin REQUIRED COMPONENTS
+ roscpp
+ tum_types_cpp
+ msgs
 )
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
-target_compile_features(${PROJECT_NAME} INTERFACE c_std_99 cxx_std_17)
-
-ament_target_dependencies(
-  ${PROJECT_NAME} 
-  rclcpp
-  tum_types_cpp
-  msgs
+catkin_package(
+ INCLUDE_DIRS include
+ LIBRARIES ${PROJECT_NAME}
+ CATKIN_DEPENDS 
+   roscpp
+   tum_types_cpp
 )
 
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
-  DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
+include_directories(
+ include
+ ${catkin_INCLUDE_DIRS}
 )
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET) # so client can also call target_link_libraries(template_lib_cpp::template_lib_cpp)
-ament_export_dependencies(rclcpp tum_types_cpp msgs) # other dependencies so client does not need to call find_package on them
+add_library(${PROJECT_NAME}
+ src/debug_publisher.cpp
+)
 
-ament_package()
+target_link_libraries(${PROJECT_NAME}
+ ${catkin_LIBRARIES}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(TARGETS ${PROJECT_NAME}
+ ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+ LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+ RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

@@ -3,7 +3,7 @@
 #include "state_estimation_cpp/filter/kalman_filter/kalman_filter_base.hpp"
 namespace tam::core::state
 {
-template <class TConfig> KFBase<TConfig>::KFBase()
+template <class TConfig> KFBase<TConfig>::KFBase(ros::NodeHandle nh)
 {
   // ensure that all matrices are set to zero
   x_.setZero();

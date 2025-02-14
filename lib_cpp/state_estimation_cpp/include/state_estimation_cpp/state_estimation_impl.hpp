@@ -8,18 +8,18 @@ template <typename TConfig> StateEstimation<TConfig>::StateEstimation(
   const std::string & vehicle_model, ros::NodeHandle nh)
 {
   // initialize all subclasses
-  state_machine_ = std::make_unique<tam::core::state::StateMachine<TConfig>>();
-  imu_handler_ = std::make_unique<tam::core::state::IMUHandler<TConfig>>();
-  ref_orientation_handler_ = std::make_unique<tam::core::state::RefOrientationHandler<TConfig>>();
+  state_machine_ = std::make_unique<tam::core::state::StateMachine<TConfig>>(nh);
+  imu_handler_ = std::make_unique<tam::core::state::IMUHandler<TConfig>>(nh);
+  ref_orientation_handler_ = std::make_unique<tam::core::state::RefOrientationHandler<TConfig>>(nh);
   vehicle_model_handler_
-    = std::make_unique<tam::core::state::VehicleModelHandler<TConfig>>(vehicle_model);
+    = std::make_unique<tam::core::state::VehicleModelHandler<TConfig>>(vehicle_model, nh);
 
   // initialize kalman filter depending on which template is chosen
   // has to be defined during compile time
   if constexpr(std::is_same_v<TConfig, tam::core::state::EKF_2D> ||
                std::is_same_v<TConfig, tam::core::state::EKF_3D>) {
     // initialize a extended kalman filter
-    kalman_filter_ = std::make_unique<tam::core::state::EKF<TConfig>>();
+    kalman_filter_ = std::make_unique<tam::core::state::EKF<TConfig>>(nh);
   } else {
     throw std::invalid_argument(
       "[StateEstimationCPP]: Kalman filter could not be initialized - check the template");
@@ -270,7 +270,7 @@ template <typename TConfig> bool StateEstimation<TConfig>::set_initial_state(voi
 template <typename TConfig> void StateEstimation<TConfig>::set_input_position(
   const tam::types::control::Odometry & odometry, uint8_t pos_num)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // sets the positional input of 2D filters
     // set the measurment vector
     if (pos_num < TConfig::NUM_POS_MEASUREMENT) {
@@ -410,7 +410,7 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_orientation
   const tam::types::control::Odometry & odometry, uint8_t orientation_num,
   [[maybe_unused]] bool set_roll, [[maybe_unused]] bool set_pitch, bool set_yaw)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // set the orientation input 2D filters
     // set the measurment vector
     if (orientation_num < TConfig::NUM_ORIENTATION_MEASUREMENT) {
@@ -562,7 +562,7 @@ template <typename TConfig>
 void StateEstimation<TConfig>::set_input_linear_velocity(
   const tam::types::control::Odometry & odometry, uint8_t vel_num)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // sets the linear velocity input in 2D
     // set the measurment vector
     if (vel_num < TConfig::NUM_VEL_MEASUREMENT) {
@@ -707,7 +707,7 @@ template <typename TConfig>
 void StateEstimation<TConfig>::set_input_acceleration(
   const tam::types::control::AccelerationwithCovariances & acceleration, uint8_t imu_num)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // set the linear acceleration input in 2D
     // set the raw input vector
     if (imu_num < (TConfig::NUM_IMU_MEASUREMENT
@@ -791,7 +791,7 @@ template <typename TConfig>
 void StateEstimation<TConfig>::set_input_angular_velocity(
   const tam::types::control::Odometry & odometry, uint8_t imu_num)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // set the angular velocity input in 2D
     // set the raw input vector
     if (imu_num < (TConfig::NUM_IMU_MEASUREMENT
@@ -1066,7 +1066,7 @@ template <typename TConfig> void StateEstimation<TConfig>::set_input_road_angles
 {
   road_angles_ = road_angles;
 
-  if constexpr (stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (stateestimation::HasStateThetaRad<TConfig>::value) {
     // additionally fuse the road angles to improve the orientation prediction for 3D filters
     bool P_VDC_FuseRoadAngles;
     nh_.getParam("P_VDC_FuseRoadAngles", P_VDC_FuseRoadAngles);
@@ -1127,9 +1127,9 @@ void StateEstimation<TConfig>::set_input_road_angle_status(
  */
 template <typename TConfig> void StateEstimation<TConfig>::set_imu_offsets(void)
 {
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
-    std::vector<double> P_VDC_InitialBias;
-    nh_.getParam("P_VDC_InitialBias", P_VDC_InitialBias);
+  std::vector<double> P_VDC_InitialBias;
+  nh_.getParam("P_VDC_InitialBias", P_VDC_InitialBias);
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // imu offsets in 2D
     Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>
       imu_bias = Eigen::Map<Eigen::VectorXd>(
@@ -1173,7 +1173,7 @@ template <typename TConfig> tam::types::control::Odometry
 {
   // map state estimation output to odometry type
   tam::types::control::Odometry output;
-  if constexpr (!stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (!stateestimation::HasStateThetaRad<TConfig>::value) {
     // odometry output of 2D filters
 
     // get the covariance matrix of the kalman filter
@@ -1269,7 +1269,7 @@ template <typename TConfig> tam::types::control::AccelerationwithCovariances
   output.acceleration_mps2.x = u_[TConfig::INPUT_AX_MPS2];
   output.acceleration_mps2.y = u_[TConfig::INPUT_AY_MPS2];
 
-  if constexpr (stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (stateestimation::HasStateThetaRad<TConfig>::value) {
     // additionally output the vertical acceleration for 3D filters
     output.acceleration_mps2.z = u_[TConfig::INPUT_AZ_MPS2];
   }
@@ -1373,7 +1373,7 @@ template <typename TConfig> tam::types::common::TUMDebugContainer::SharedPtr
     kalman_filter_debug_container_->log(it->first, it->second);
   }
 
-  if constexpr (stateestimation::HasStateThetaRad<TConfig>) {
+  if constexpr (stateestimation::HasStateThetaRad<TConfig>::value) {
     // additional logging for 3D filters
     kalman_filter_debug_container_->log("phi_road", road_angles_.x);
     kalman_filter_debug_container_->log("theta_road", road_angles_.y);

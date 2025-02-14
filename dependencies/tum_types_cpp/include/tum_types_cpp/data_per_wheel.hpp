@@ -139,31 +139,31 @@ struct DataPerWheel
   // Addition function for bool overload
   // ======================================================
   DataPerWheel<bool> operator!() const {
-    static_assert(std::is_same_v<T, bool>, "T must be bool");  // T가 bool인지 확인
+    static_assert(std::is_same<T, bool>::value, "T must be bool");  // T가 bool인지 확인
     return { !front_left, !front_right, !rear_left, !rear_right };
   }
   DataPerWheel<bool> operator&&(const DataPerWheel<bool> & other) const
   {
-    static_assert(std::is_same_v<T, bool>, "T must be bool");
+    static_assert(std::is_same<T, bool>::value, "T must be bool");
     return {
       front_left && other.front_left, front_right && other.front_right,
       rear_left && other.rear_left, rear_right && other.rear_right};
   }
   DataPerWheel<bool> operator||(const DataPerWheel<bool> & other) const
   {
-    static_assert(std::is_same_v<T, bool>, "T must be bool");
+    static_assert(std::is_same<T, bool>::value, "T must be bool");
     return {
       front_left || other.front_left, front_right || other.front_right,
       rear_left || other.rear_left, rear_right || other.rear_right};
   }
   bool all() const
   {
-    static_assert(std::is_same_v<T, bool>, "T must be bool");
+    static_assert(std::is_same<T, bool>::value, "T must be bool");
     return (front_left && front_right && rear_left && rear_right);
   }
   bool any() const
   {
-    static_assert(std::is_same_v<T, bool>, "T must be bool");
+    static_assert(std::is_same<T, bool>::value, "T must be bool");
     return (front_left || front_right || rear_left || rear_right);
   }
 };

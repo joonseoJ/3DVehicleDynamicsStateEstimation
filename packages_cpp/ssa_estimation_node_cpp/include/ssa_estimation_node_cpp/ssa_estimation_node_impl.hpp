@@ -13,8 +13,8 @@ template <class TConfig> SSAEstimationNode<TConfig>::SSAEstimationNode(
 {
   // Initialize the ParamManagerBase
   param_manager_ = ssa_estimation_->get_param_handler();
-  callback_handle_ = tam::ros::connect_param_manager_to_ros_cb(this, param_manager_.get());
-  tam::ros::declare_ros_params_from_param_manager(this, param_manager_.get());
+  callback_handle_ = tam::ROS::connect_param_manager_to_ros_cb(this, param_manager_.get());
+  tam::ROS::declare_ros_params_from_param_manager(this, param_manager_.get());
 
   // Check Parameter
   for (std::string name : param_manager_->list_parameters()) {

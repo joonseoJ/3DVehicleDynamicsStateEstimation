@@ -28,7 +28,7 @@ public:
   /**
    * @brief Constructor
    */
-  KFBase();
+  KFBase(ros::NodeHandle nh);
 
   /**
    * @brief update the measurement covariance matrix  

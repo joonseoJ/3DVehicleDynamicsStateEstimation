@@ -3,117 +3,127 @@
 #include "state_estimation_node_cpp/state_estimation_node.hpp"
 
 using namespace std::chrono_literals;
-using std::placeholders::_1;
-using std::placeholders::_2;
+// using std::placeholders::_1;
+// using std::placeholders::_2;
 
 template <class TConfig> stateEstimationNode<TConfig>::stateEstimationNode(
   std::unique_ptr<tam::core::state::StateEstimationBase> && state_estimation,
-  const std::string vehicle_model, const rclcpp::NodeOptions & options)
-: Node("StateEstimation", "/core/state", options), state_estimation_(std::move(state_estimation))
+  const std::string vehicle_model,
+  ros::NodeHandle nh)
+: state_estimation_(std::move(state_estimation))
 {
+  nh_ = nh;
+  debug_channel_publishers_ = {
+      tam::ROS::DebugPublisher(nh_, "odometry_1"),
+      tam::ROS::DebugPublisher(nh_, "odometry_2"),
+      tam::ROS::DebugPublisher(nh_, "odometry_3"),
+      tam::ROS::DebugPublisher(nh_, "state_machine"),
+      tam::ROS::DebugPublisher(nh_, "kalman_filter"),
+    };
   // Initialize the transform broadcaster
   // has to be done before initializing the param manager
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>();
 
   // initialize TransformListener
-  tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_buffer_ = std::make_unique<tf2_ros::Buffer>();
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   // Initialize the ParamManagerBase
-  param_manager_ = state_estimation_->get_param_handler();
+  // param_manager_ = state_estimation_->get_param_handler();
 
-  callback_handle_ = tam::ros::connect_param_manager_to_ros_cb(this, param_manager_.get());
-  tam::ros::declare_ros_params_from_param_manager(this, param_manager_.get());
+  // callback_handle_ = tam::ROS::connect_param_manager_to_ros_cb(this, param_manager_.get());
+  // tam::ROS::declare_ros_params_from_param_manager(this, param_manager_.get());
 
   // Check Parameter
-  for (std::string name : param_manager_->list_parameters()) {
-    rclcpp::Parameter param = this->get_parameter(name);
-    RCLCPP_INFO(
-      this->get_logger(), "param name: %s, value: %s", param.get_name().c_str(),
-      param.value_to_string().c_str());
-  }
+  // for (std::string name : param_manager_->list_parameters()) {
+  //   rclcpp::Parameter param = this->get_parameter(name);
+  //   RCLCPP_INFO(
+  //     this->get_logger(), "param name: %s, value: %s", param.get_name().c_str(),
+  //     param.value_to_string().c_str());
+  // }
 
-  RCLCPP_INFO(this->get_logger(), "Parameter Manager of State Estimation initialized");
+  // RCLCPP_INFO(this->get_logger(), "Parameter Manager of State Estimation initialized");
 
   // initialize the topic watchdog
   std::function<void()> timer_callback_fct
     = std::bind(&stateEstimationNode::model_update_callback, this);
-  topic_watchdog_ = std::make_unique<tam::core::TopicWatchdog>(this);
+  topic_watchdog_ = std::make_unique<tam::core::TopicWatchdog>(nh_);
   callback_queue_.push_back(topic_watchdog_->get_update_function());
   callback_queue_.push_back(timer_callback_fct);
 
   // model step callback
   model_update_timer_ =
-    this->create_wall_timer(10ms, callback_queue_.get_function_queue());
+    nh_.createTimer(ros::Duration(0.01), callback_queue_.get_function_queue());
 
   // subscriber
-  topic_watchdog_->add_subscription<nav_msgs::msg::Odometry>(
-    "/vehicle/sensor/odometry1", 10, std::bind(&stateEstimationNode::odometry_1_callback, this, _1),
-    std::bind(&stateEstimationNode::odometry_1_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<nav_msgs::Odometry>(
+    "/vehicle/sensor/odometry1", 10, 
+    std::bind(&stateEstimationNode::odometry_1_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::odometry_1_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<sensor_msgs::msg::Imu>(
-    "/vehicle/sensor/imu1", 10, std::bind(&stateEstimationNode::imu_1_callback, this, _1),
-    std::bind(&stateEstimationNode::imu_1_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<sensor_msgs::Imu>(
+    "/vehicle/sensor/imu1", 10, std::bind(&stateEstimationNode::imu_1_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::imu_1_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
-    "/vehicle/sensor/status1", 10, std::bind(&stateEstimationNode::status_1_callback, this, _1),
-    std::bind(&stateEstimationNode::status_1_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<diagnostic_msgs::DiagnosticStatus>(
+    "/vehicle/sensor/status1", 10, std::bind(&stateEstimationNode::status_1_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::status_1_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<nav_msgs::msg::Odometry>(
-    "/vehicle/sensor/odometry2", 10, std::bind(&stateEstimationNode::odometry_2_callback, this, _1),
-    std::bind(&stateEstimationNode::odometry_2_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<nav_msgs::Odometry>(
+    "/vehicle/sensor/odometry2", 10, std::bind(&stateEstimationNode::odometry_2_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::odometry_2_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<sensor_msgs::msg::Imu>(
-    "/vehicle/sensor/imu2", 10, std::bind(&stateEstimationNode::imu_2_callback, this, _1),
-    std::bind(&stateEstimationNode::imu_2_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<sensor_msgs::Imu>(
+    "/vehicle/sensor/imu2", 10, std::bind(&stateEstimationNode::imu_2_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::imu_2_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
-    "/vehicle/sensor/status2", 10, std::bind(&stateEstimationNode::status_2_callback, this, _1),
-    std::bind(&stateEstimationNode::status_2_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<diagnostic_msgs::DiagnosticStatus>(
+    "/vehicle/sensor/status2", 10, std::bind(&stateEstimationNode::status_2_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::status_2_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<nav_msgs::msg::Odometry>(
-    "/vehicle/sensor/odometry3", 10, std::bind(&stateEstimationNode::odometry_3_callback, this, _1),
-    std::bind(&stateEstimationNode::odometry_3_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<nav_msgs::Odometry>(
+    "/vehicle/sensor/odometry3", 10, std::bind(&stateEstimationNode::odometry_3_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::odometry_3_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<sensor_msgs::msg::Imu>(
-    "/vehicle/sensor/imu3", 10, std::bind(&stateEstimationNode::imu_3_callback, this, _1),
-    std::bind(&stateEstimationNode::imu_3_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<sensor_msgs::Imu>(
+    "/vehicle/sensor/imu3", 10, std::bind(&stateEstimationNode::imu_3_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::imu_3_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-  topic_watchdog_->add_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
-    "/vehicle/sensor/status3", 10, std::bind(&stateEstimationNode::status_3_callback, this, _1),
-    std::bind(&stateEstimationNode::status_3_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<diagnostic_msgs::DiagnosticStatus>(
+    "/vehicle/sensor/status3", 10, std::bind(&stateEstimationNode::status_3_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::status_3_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
   if (vehicle_model != "kinematic") {
-    topic_watchdog_->add_subscription<msgs::msg::TUMFloat64PerWheelStamped>(
+    topic_watchdog_->add_subscription<msgs::TUMFloat64PerWheelStamped>(
       "/vehicle/sensor/wheelspeed_radps", 10,
-      std::bind(&stateEstimationNode::wheelspeed_report_callback, this, _1),
-      std::bind(&stateEstimationNode::wheelspeed_report_timeout_callback, this, _1, _2), 500ms);
+      std::bind(&stateEstimationNode::wheelspeed_report_callback, this, std::placeholders::_1),
+      std::bind(&stateEstimationNode::wheelspeed_report_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
-    topic_watchdog_->add_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
+    topic_watchdog_->add_subscription<diagnostic_msgs::DiagnosticStatus>(
       "/vehicle/sensor/wheelspeed_status", 10,
-      std::bind(&stateEstimationNode::wheelspeed_status_callback, this, _1),
-      std::bind(&stateEstimationNode::wheelspeed_status_timeout_callback, this, _1, _2), 500ms);
+      std::bind(&stateEstimationNode::wheelspeed_status_callback, this, std::placeholders::_1),
+      std::bind(&stateEstimationNode::wheelspeed_status_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
   }
 
   if (vehicle_model == "single-track-model") {
-    topic_watchdog_->add_subscription<msgs::msg::SteeringReport>(
+    topic_watchdog_->add_subscription<msgs::SteeringReport>(
       "/vehicle/sensor/steering_report", 10,
-      std::bind(&stateEstimationNode::steering_report_callback, this, _1),
-      std::bind(&stateEstimationNode::steering_report_timeout_callback, this, _1, _2), 500ms);
+      std::bind(&stateEstimationNode::steering_report_callback, this, std::placeholders::_1),
+      std::bind(&stateEstimationNode::steering_report_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
   }
 
-  topic_watchdog_->add_subscription<nav_msgs::msg::Odometry>(
-    "/core/ssa/odometry", 10, std::bind(&stateEstimationNode::side_slip_estimation_callback, this, _1),
-    std::bind(&stateEstimationNode::side_slip_estimation_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<nav_msgs::Odometry>(
+    "/core/ssa/odometry", 10, std::bind(&stateEstimationNode::side_slip_estimation_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::side_slip_estimation_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
   
-  topic_watchdog_->add_subscription<diagnostic_msgs::msg::DiagnosticStatus>(
-    "/core/ssa/status", 10, std::bind(&stateEstimationNode::side_slip_estimation_status_callback, this, _1),
-    std::bind(&stateEstimationNode::side_slip_estimation_status_timeout_callback, this, _1, _2), 500ms);
+  topic_watchdog_->add_subscription<diagnostic_msgs::DiagnosticStatus>(
+    "/core/ssa/status", 10, std::bind(&stateEstimationNode::side_slip_estimation_status_callback, this, std::placeholders::_1),
+    std::bind(&stateEstimationNode::side_slip_estimation_status_timeout_callback, this, std::placeholders::_1, std::placeholders::_2), 500ms);
 
   // publisher for the state estimation output
-  pub_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>("/core/state/odometry", 10);
+  pub_odometry_ = nh_.advertise<nav_msgs::Odometry>("/core/state/odometry", 10);
 
-  pub_acceleration_ = this->create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>(
+  pub_acceleration_ = nh_.advertise<geometry_msgs::AccelWithCovarianceStamped>(
     "/core/state/acceleration", 10);
 }
 
@@ -128,7 +138,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::model_update_callbac
   if (initialize_) {
     if (state_estimation_->set_initial_state()) {
       initialize_ = false;
-      RCLCPP_INFO(this->get_logger(), "Initial state of the state estimation has been set");
+      ROS_INFO("Initial state of the state estimation has been set");
     }
   } else {
     // the state estimation was initialized successfully
@@ -139,7 +149,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::model_update_callbac
     odometry_output_ = state_estimation_->get_odometry();
     acceleration_output_ = state_estimation_->get_acceleration();
 
-    rclcpp::Time time_pub = get_clock()->now();
+    ros::Time time_pub = ros::Time::now();
 
     // publish state estimation output
     publish_odometry(time_pub);
@@ -167,10 +177,10 @@ template <class TConfig> void stateEstimationNode<TConfig>::model_update_callbac
  *        in 3D (vehicle coordinate frame for the velocity)
  */
 template <> void stateEstimationNode<tam::core::state::EKF_3D>::publish_odometry(
-  rclcpp::Time time_pub)
+  ros::Time time_pub)
 {
   // convert odometry type to a nav_msgs::msg::Odometry
-  nav_msgs::msg::Odometry odometry_msg =
+  nav_msgs::Odometry odometry_msg =
     tam::type_conversions::odometry_msg_from_type(odometry_output_);
 
   // construct message header
@@ -178,7 +188,7 @@ template <> void stateEstimationNode<tam::core::state::EKF_3D>::publish_odometry
   odometry_msg.header.frame_id = "local_cartesian";
   odometry_msg.child_frame_id = "vehicle_cg";
 
-  pub_odometry_->publish(odometry_msg);
+  pub_odometry_.publish(odometry_msg);
 }
 
 /**
@@ -188,10 +198,10 @@ template <> void stateEstimationNode<tam::core::state::EKF_3D>::publish_odometry
  *        the 3D
  */
 template <class TConfig> void stateEstimationNode<TConfig>::publish_odometry(
-  rclcpp::Time time_pub)
+  ros::Time time_pub)
 {
   // convert odometry type to a nav_msgs::msg::Odometry
-  nav_msgs::msg::Odometry odometry_msg =
+  nav_msgs::Odometry odometry_msg =
     tam::type_conversions::odometry_msg_from_type(odometry_output_);
 
   // construct message header
@@ -199,7 +209,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::publish_odometry(
   odometry_msg.header.frame_id = "local_cartesian";
   odometry_msg.child_frame_id = "vehicle_velocity_cg";
 
-  pub_odometry_->publish(odometry_msg);
+  pub_odometry_.publish(odometry_msg);
 }
 
 /**
@@ -210,17 +220,17 @@ template <class TConfig> void stateEstimationNode<TConfig>::publish_odometry(
  *        the 3D
  */
 template <class TConfig> void stateEstimationNode<TConfig>::publish_acceleration(
-  rclcpp::Time time_pub)
+  ros::Time time_pub)
 {
   // convert odometry type to a geometry_msgs::msg::AccelWithCovarianceStamped
-  geometry_msgs::msg::AccelWithCovarianceStamped acceleration_msg =
+  geometry_msgs::AccelWithCovarianceStamped acceleration_msg =
     tam::type_conversions::accel_with_covariance_stamped_msg_from_type(acceleration_output_);
 
   // construct message header
   acceleration_msg.header.stamp = time_pub;
   acceleration_msg.header.frame_id = "vehicle_cg";
 
-  pub_acceleration_->publish(acceleration_msg);
+  pub_acceleration_.publish(acceleration_msg);
 }
 
 /**
@@ -232,8 +242,8 @@ template <class TConfig> void stateEstimationNode<TConfig>::publish_dynamic_tran
 {
   // get timestamp and publish transform from
   // local_cartesian to vehicle_velocity_cg
-  geometry_msgs::msg::TransformStamped transform_local_cartesian;
-  transform_local_cartesian.header.stamp = this->get_clock()->now();
+  geometry_msgs::TransformStamped transform_local_cartesian;
+  transform_local_cartesian.header.stamp = ros::Time::now();
   transform_local_cartesian.header.frame_id = "local_cartesian";
   transform_local_cartesian.child_frame_id = "base_link";
 
@@ -255,8 +265,8 @@ template <class TConfig> void stateEstimationNode<TConfig>::publish_dynamic_tran
 
   // get timestamp and publish transform from
   // vehicle_cg to vehicle_velocity_cg
-  geometry_msgs::msg::TransformStamped transform_vehicle_cg;
-  transform_vehicle_cg.header.stamp = this->get_clock()->now();
+  geometry_msgs::TransformStamped transform_vehicle_cg;
+  transform_vehicle_cg.header.stamp = ros::Time::now();
   transform_vehicle_cg.header.frame_id = "vehicle_cg";
   transform_vehicle_cg.child_frame_id = "vehicle_velocity_cg";
 
@@ -313,7 +323,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::update_road_angles(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::odometry_1_callback(
-  const nav_msgs::msg::Odometry::SharedPtr msg)
+  const nav_msgs::Odometry::ConstPtr msg)
 {
   // input position of the first sensor position
   tam::types::control::Odometry input =
@@ -322,9 +332,9 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_1_callback(
   try
   {
     // Try to look up the transform
-    geometry_msgs::msg::TransformStamped transform =
+    geometry_msgs::TransformStamped transform =
       tf_buffer_->lookupTransform(
-      "gps_antenna_front", "vehicle_cg", tf2::TimePointZero);
+      "gps_antenna_front", "vehicle_cg", ros::Time(0.0));
 
     // build the rotation matrix
     tf2::Matrix3x3 rotation_matrix;
@@ -349,7 +359,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_1_callback(
   }
   catch (tf2::TransformException &ex)
   {
-    RCLCPP_INFO(this->get_logger(), "Failed to transform: %s", ex.what());
+    ROS_INFO("Failed to transform: %s", ex.what());
   }
 
   // set state estimation localization input
@@ -361,7 +371,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_1_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::imu_1_callback(
-  const sensor_msgs::msg::Imu::SharedPtr msg)
+  const sensor_msgs::Imu::ConstPtr msg)
 {
   tam::types::control::AccelerationwithCovariances input_acceleration =
     tam::type_conversions::acceleration_with_covariances_type_from_imu_msg(msg);
@@ -380,7 +390,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::imu_1_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::status_1_callback(
-  const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg)
+  const diagnostic_msgs::DiagnosticStatus::ConstPtr msg)
 {
   // set state estimation sensor status
   state_estimation_->set_input_position_status(
@@ -391,7 +401,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::status_1_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::odometry_2_callback(
-  const nav_msgs::msg::Odometry::SharedPtr msg)
+  const nav_msgs::Odometry::ConstPtr msg)
 {
   // input position of the second sensor position
   tam::types::control::Odometry input =
@@ -400,9 +410,9 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_2_callback(
   try
   {
     // Try to look up the transform
-    geometry_msgs::msg::TransformStamped transform =
+    geometry_msgs::TransformStamped transform =
       tf_buffer_->lookupTransform(
-      "gps_antenna_right", "vehicle_cg", tf2::TimePointZero);
+      "gps_antenna_right", "vehicle_cg", ros::Time(0));
 
     // build the rotation matrix
     tf2::Matrix3x3 rotation_matrix;
@@ -427,7 +437,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_2_callback(
   }
   catch (tf2::TransformException &ex)
   {
-    RCLCPP_INFO(this->get_logger(), "Failed to transform: %s", ex.what());
+    ROS_INFO("Failed to transform: %s", ex.what());
   }
 
   // set state estimation localization input
@@ -439,7 +449,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_2_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::imu_2_callback(
-  const sensor_msgs::msg::Imu::SharedPtr msg)
+  const sensor_msgs::Imu::ConstPtr msg)
 {
   tam::types::control::AccelerationwithCovariances input_acceleration =
     tam::type_conversions::acceleration_with_covariances_type_from_imu_msg(msg);
@@ -458,7 +468,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::imu_2_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::status_2_callback(
-  const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg)
+  const diagnostic_msgs::DiagnosticStatus::ConstPtr msg)
 {
   // set state estimation sensor status
   state_estimation_->set_input_position_status(
@@ -469,7 +479,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::status_2_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::odometry_3_callback(
-  const nav_msgs::msg::Odometry::SharedPtr msg)
+  const nav_msgs::Odometry::ConstPtr msg)
 {
   // input position of the first sensor position
   tam::types::control::Odometry input =
@@ -480,9 +490,9 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_3_callback(
   try
   {
     // Try to look up the transform
-    geometry_msgs::msg::TransformStamped transform =
+    geometry_msgs::TransformStamped transform =
       tf_buffer_->lookupTransform(
-      "gps_antenna_front", "vehicle_cg", tf2::TimePointZero);
+      "gps_antenna_front", "vehicle_cg", ros::Time(0));
 
     // build the rotation matrix
     tf2::Matrix3x3 rotation_matrix;
@@ -507,7 +517,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_3_callback(
   }
   catch (tf2::TransformException &ex)
   {
-    RCLCPP_INFO(this->get_logger(), "Failed to transform: %s", ex.what());
+    ROS_INFO("Failed to transform: %s", ex.what());
   }
 
   // set state estimation localization input
@@ -519,7 +529,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::odometry_3_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::imu_3_callback(
-  const sensor_msgs::msg::Imu::SharedPtr msg)
+  const sensor_msgs::Imu::ConstPtr msg)
 {
   tam::types::control::AccelerationwithCovariances input_acceleration =
     tam::type_conversions::acceleration_with_covariances_type_from_imu_msg(msg);
@@ -538,7 +548,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::imu_3_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::status_3_callback(
-  const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg)
+  const diagnostic_msgs::DiagnosticStatus::ConstPtr msg)
 {
   // set state estimation sensor status
   state_estimation_->set_input_position_status(
@@ -549,7 +559,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::status_3_callback(
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::wheelspeed_report_callback(
-  const msgs::msg::TUMFloat64PerWheelStamped::SharedPtr msg)
+  const msgs::TUMFloat64PerWheelStamped::ConstPtr msg)
 {
   // input angluar velocity per wheel
   tam::types::common::DataPerWheel<double> input;
@@ -562,7 +572,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::wheelspeed_report_ca
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::wheelspeed_status_callback(
-  const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg)
+  const diagnostic_msgs::DiagnosticStatus::ConstPtr msg)
 {
   // set state estimation sensor status
   state_estimation_->set_input_wheelspeed_status(
@@ -570,7 +580,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::wheelspeed_status_ca
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::steering_report_callback(
-  const msgs::msg::SteeringReport::SharedPtr msg)
+  const msgs::SteeringReport::ConstPtr msg)
 {
   // set the steering angle input and the status
   state_estimation_->set_input_steering_angle(msg->steering_tire_angle);
@@ -578,7 +588,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::steering_report_call
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::side_slip_estimation_callback(
-  const nav_msgs::msg::Odometry::SharedPtr msg)
+  const nav_msgs::Odometry::ConstPtr msg)
 {
   tam::types::control::Odometry input =
     tam::type::conversions::cpp::Odometry_type_from_msg(msg);
@@ -588,7 +598,7 @@ template <class TConfig> void stateEstimationNode<TConfig>::side_slip_estimation
 }
 
 template <class TConfig> void stateEstimationNode<TConfig>::side_slip_estimation_status_callback(
-  const diagnostic_msgs::msg::DiagnosticStatus::SharedPtr msg)
+  const diagnostic_msgs::DiagnosticStatus::ConstPtr msg)
 {
   // set state estimation sensor status
   state_estimation_->set_input_linear_velocity_status(

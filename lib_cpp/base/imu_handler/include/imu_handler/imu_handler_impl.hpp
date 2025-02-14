@@ -114,12 +114,10 @@ template <class TConfig> const Eigen::Vector<double, TConfig::INPUT_VECTOR_SIZE>
       std::string param_name = "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients";
       std::vector<double> filter_coefficients;
 
-      if (nh_.getParam(param_name, filter_coefficients)) {
-        Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
-            filter_coefficients.data(), filter_coefficients.size());
-      } else {
-        ROS_ERROR_STREAM("Failed to get parameter: " << param_name);
-      }
+      nh_.getParam(param_name, filter_coefficients);
+      Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
+          filter_coefficients.data(), filter_coefficients.size());
+      
 
       // Eigen::VectorXd imu_filter_coefficients_imu = Eigen::Map<Eigen::VectorXd>(
       //   param_manager_->get_parameter_value("P_VDC_IMU" + std::to_string(i + 1)
