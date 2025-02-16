@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosbag_example</name>
+  <version>0.1.0</version>
+  <description>Example package for running vehicle state estimation and SSA estimation</description>
+
+  <maintainer email="francejs1025@example.com">Your Name</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <depend>roscpp</depend>
+
+  <export>
+  </export>
+</package>

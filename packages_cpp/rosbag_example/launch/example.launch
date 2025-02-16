@@ -1,0 +1,18 @@
+<launch>
+    <!-- use_sim_time 파라미터 설정 -->
+    <param name="use_sim_time" value="true" />
+
+    <!-- state_publisher 노드 실행 -->
+    <include file="$(find state_publisher)/launch/state_publisher.launch"/>
+    <!-- <node pkg="state_publisher" type="state_publisher.py" name="state_publisher" output="screen"/> -->
+
+    <!-- state_estimation_node_cpp 실행 -->
+    <node pkg="state_estimation_node_cpp" type="state_estimation_node_cpp_ekf_2d_kin" name="state_estimation" output="screen">
+        <param name="config_file" value="$(find state_estimation_node_cpp)/config/state_estimation_cpp_2d_ekf_config.yml" />
+    </node>
+
+    <!-- ssa_estimation_node_cpp 실행 -->
+    <node pkg="ssa_estimation_node_cpp" type="ssa_estimation_node" name="ssa_estimation" output="screen">
+        <param name="config_file" value="$(find ssa_estimation_node_cpp)/config/ssa_estimation_ukf_config.yml" />
+    </node>
+</launch>
