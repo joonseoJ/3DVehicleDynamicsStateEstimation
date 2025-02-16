@@ -17,7 +17,7 @@ template <class TConfig> IMUHandler<TConfig>::IMUHandler(ros::NodeHandle nh)
         0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
         0.24522338986219644, 0.07722183762197628
     };
-    nh_.setParam(param_name, filter_coefficients);
+    if (!nh_.hasParam(param_name)) nh_.setParam(param_name, filter_coefficients);
 
     // param_manager_->declare_parameter(
     //   "P_VDC_IMU" + std::to_string(i + 1) + "_filter_coefficients",

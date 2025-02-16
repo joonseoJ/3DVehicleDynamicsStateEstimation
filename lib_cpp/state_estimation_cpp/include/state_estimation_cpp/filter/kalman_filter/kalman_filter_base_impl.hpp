@@ -26,13 +26,21 @@ template <class TConfig> KFBase<TConfig>::KFBase(ros::NodeHandle nh)
   nh_ = nh;
 
   // declare Kalman filter parameters
-  nh_.setParam("P_VDC_EnableMeasCovAdaptation_EKF", true);
-  nh_.setParam("P_VDC_EnableInputCrossCorrelation", true);
-  nh_.setParam("P_VDC_EnableMahalanobisOutlierDetection", false);
+  if (!nh_.hasParam("P_VDC_EnableMeasCovAdaptation_EKF")) 
+    nh_.setParam("P_VDC_EnableMeasCovAdaptation_EKF", true);
+
+  if (!nh_.hasParam("P_VDC_EnableInputCrossCorrelation")) 
+    nh_.setParam("P_VDC_EnableInputCrossCorrelation", true);
+
+  if (!nh_.hasParam("P_VDC_EnableMahalanobisOutlierDetection")) 
+    nh_.setParam("P_VDC_EnableMahalanobisOutlierDetection", false);
 
   // declare covariance adaption parameters
-  nh_.setParam("P_VDC_MeasC_lim", 1.5);
-  nh_.setParam("P_VDC_MeasC_decay", 0.00165);
+  if (!nh_.hasParam("P_VDC_MeasC_lim")) 
+    nh_.setParam("P_VDC_MeasC_lim", 1.5);
+
+  if (!nh_.hasParam("P_VDC_MeasC_decay")) 
+    nh_.setParam("P_VDC_MeasC_decay", 0.00165);
 }
 
 /**

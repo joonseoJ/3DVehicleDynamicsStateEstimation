@@ -7,7 +7,8 @@ template <class TConfig> tam::core::state::StateMachine<TConfig>::StateMachine(r
   nh_ = nh;
 
   // Minimum number of valid IMUs not to perform a safe stop
-  nh_.setParam("P_VDC_MinValidIMUs", 2);
+  if (!nh_.hasParam("P_VDC_MinValidIMUs"))
+    nh_.setParam("P_VDC_MinValidIMUs", 2);
 
   // initialize the valid map for better readability
   // valid bits for the position inputs

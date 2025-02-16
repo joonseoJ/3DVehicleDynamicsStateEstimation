@@ -7,10 +7,17 @@ template <class TConfig> tam::core::state::VehicleModelHandler<TConfig>::Vehicle
 {
   nh_ = nh;
 
-  nh_.setParam("tyreradius_front_m", 0.293475);
-  nh_.setParam("tyreradius_rear_m", 0.307435);
-  nh_.setParam("l_WheelbaseF_m", 1.724);
-  nh_.setParam("l_WheelbaseR_m", 1.247);
+  if (!nh_.hasParam("tyreradius_front_m"))
+    nh_.setParam("tyreradius_front_m", 0.293475);
+
+  if (!nh_.hasParam("tyreradius_rear_m"))
+    nh_.setParam("tyreradius_rear_m", 0.307435);
+
+  if (!nh_.hasParam("l_WheelbaseF_m"))
+    nh_.setParam("l_WheelbaseF_m", 1.724);
+
+  if (!nh_.hasParam("l_WheelbaseR_m"))
+    nh_.setParam("l_WheelbaseR_m", 1.247);
 
   if (vehicle_model == "kinematic") {
     kinematic_model_ = true;

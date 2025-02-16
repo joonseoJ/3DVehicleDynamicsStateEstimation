@@ -11,38 +11,39 @@ template <class TConfig> UKF<TConfig>::UKF(ros::NodeHandle nh)
   // initialize node handle
   nh_ = nh;
   // declare vehicle parameters
-  nh_.setParam("P_VDC_mass_kg", 800.00);
-  nh_.setParam("P_VDC_Izz_kgm2", 1000.00);
-  nh_.setParam("P_VDC_l_front_m", 1.724);
-  nh_.setParam("P_VDC_l_rear_m", 1.247);
-  nh_.setParam("P_VDC_tw_front_m", 1.639);
-  nh_.setParam("P_VDC_tw_rear_m", 1.524);
-  nh_.setParam("P_VDC_rho_air_kgpm3", 1.22);
-  nh_.setParam("P_VDC_cL_front", -0.65);
-  nh_.setParam("P_VDC_cL_rear", -0.8);
+  
+  if (!nh_.hasParam("P_VDC_mass_kg")) nh_.setParam("P_VDC_mass_kg", 800.00);
+  if (!nh_.hasParam("P_VDC_Izz_kgm2")) nh_.setParam("P_VDC_Izz_kgm2", 1000.00);
+  if (!nh_.hasParam("P_VDC_l_front_m")) nh_.setParam("P_VDC_l_front_m", 1.724);
+  if (!nh_.hasParam("P_VDC_l_rear_m")) nh_.setParam("P_VDC_l_rear_m", 1.247);
+  if (!nh_.hasParam("P_VDC_tw_front_m")) nh_.setParam("P_VDC_tw_front_m", 1.639);
+  if (!nh_.hasParam("P_VDC_tw_rear_m")) nh_.setParam("P_VDC_tw_rear_m", 1.524);
+  if (!nh_.hasParam("P_VDC_rho_air_kgpm3")) nh_.setParam("P_VDC_rho_air_kgpm3", 1.22);
+  if (!nh_.hasParam("P_VDC_cL_front")) nh_.setParam("P_VDC_cL_front", -0.65);
+  if (!nh_.hasParam("P_VDC_cL_rear")) nh_.setParam("P_VDC_cL_rear", -0.8);
   // declare brake parameters
-  nh_.setParam("P_VDC_d_brake_bore_front_m", 0.0798);
-  nh_.setParam("P_VDC_d_brake_bore_rear_m", 0.0798);
-  nh_.setParam("P_VDC_r_brake_pads_lever_front_m", 0.1493);
-  nh_.setParam("P_VDC_r_brake_pads_lever_rear_m", 0.1493);
-  nh_.setParam("P_VDC_mue_brakes_front", 0.55);
-  nh_.setParam("P_VDC_mue_brakes_rear", 0.55);
+  if (!nh_.hasParam("P_VDC_d_brake_bore_front_m")) nh_.setParam("P_VDC_d_brake_bore_front_m", 0.0798);
+  if (!nh_.hasParam("P_VDC_d_brake_bore_rear_m")) nh_.setParam("P_VDC_d_brake_bore_rear_m", 0.0798);
+  if (!nh_.hasParam("P_VDC_r_brake_pads_lever_front_m")) nh_.setParam("P_VDC_r_brake_pads_lever_front_m", 0.1493);
+  if (!nh_.hasParam("P_VDC_r_brake_pads_lever_rear_m")) nh_.setParam("P_VDC_r_brake_pads_lever_rear_m", 0.1493);
+  if (!nh_.hasParam("P_VDC_mue_brakes_front")) nh_.setParam("P_VDC_mue_brakes_front", 0.55);
+  if (!nh_.hasParam("P_VDC_mue_brakes_rear")) nh_.setParam("P_VDC_mue_brakes_rear", 0.55);
   // declare tire parameters
-  nh_.setParam("P_VDC_rtire_front_m", 0.2999);
-  nh_.setParam("P_VDC_rtire_rear_m", 0.3120);
-  nh_.setParam("P_VDC_tire_MF_long_front", std::vector<double>{15.0, 1.40, 1.55, 1.0});
-  nh_.setParam("P_VDC_tire_MF_long_rear", std::vector<double>{15.0, 1.40, 1.60, 1.00});
-  nh_.setParam("P_VDC_tire_MF_lat_front", std::vector<double>{10.0, 1.30, 1.40, 1.0});
-  nh_.setParam("P_VDC_tire_MF_lat_rear", std::vector<double>{15.0, 1.40, 1.65, 1.00});
+  if (!nh_.hasParam("P_VDC_rtire_front_m")) nh_.setParam("P_VDC_rtire_front_m", 0.2999);
+  if (!nh_.hasParam("P_VDC_rtire_rear_m")) nh_.setParam("P_VDC_rtire_rear_m", 0.3120);
+  if (!nh_.hasParam("P_VDC_tire_MF_long_front")) nh_.setParam("P_VDC_tire_MF_long_front", std::vector<double>{15.0, 1.40, 1.55, 1.0});
+  if (!nh_.hasParam("P_VDC_tire_MF_long_rear")) nh_.setParam("P_VDC_tire_MF_long_rear", std::vector<double>{15.0, 1.40, 1.60, 1.00});
+  if (!nh_.hasParam("P_VDC_tire_MF_lat_front")) nh_.setParam("P_VDC_tire_MF_lat_front", std::vector<double>{10.0, 1.30, 1.40, 1.0});
+  if (!nh_.hasParam("P_VDC_tire_MF_lat_rear")) nh_.setParam("P_VDC_tire_MF_lat_rear", std::vector<double>{15.0, 1.40, 1.65, 1.00});
   // declare parameters for sigma point distribution
-  nh_.setParam("P_VDC_alpha", 0.001);
-  nh_.setParam("P_VDC_beta", 2.0);
-  nh_.setParam("P_VDC_kappa", 0.0);
+  if (!nh_.hasParam("P_VDC_alpha")) nh_.setParam("P_VDC_alpha", 0.001);
+  if (!nh_.hasParam("P_VDC_beta")) nh_.setParam("P_VDC_beta", 2.0);
+  if (!nh_.hasParam("P_VDC_kappa")) nh_.setParam("P_VDC_kappa", 0.0);
   // declare parameters containing the initial covariance matrices
-  nh_.setParam("P_VDC_P_Init", std::vector<double>{0.5, 0.0004});
-  nh_.setParam("P_VDC_ProcessCov_Q", std::vector<double>{0.025, 0.00015});
+  if (!nh_.hasParam("P_VDC_P_Init")) nh_.setParam("P_VDC_P_Init", std::vector<double>{0.5, 0.0004});
+  if (!nh_.hasParam("P_VDC_ProcessCov_Q")) nh_.setParam("P_VDC_ProcessCov_Q", std::vector<double>{0.025, 0.00015});
   // R: v_stm, v_stm, FxTf, FxTr, FyTf, FyTr
-  nh_.setParam("P_VDC_MeasCov_R", std::vector<double>{1.00, 1.00, 200.0, 200.0, 150.0, 150.0});
+  if (!nh_.hasParam("P_VDC_MeasCov_R")) nh_.setParam("P_VDC_MeasCov_R", std::vector<double>{1.00, 1.00, 200.0, 200.0, 150.0, 150.0});
   // define auxilary variables
   initialize_ = true;
   vel_min_mps_ = 5.0;

@@ -14,32 +14,41 @@ SSAEstimation<TConfig>::SSAEstimation(ros::NodeHandle nh)
   nh_ = nh;
 
   // Squared distance threshold on acceleration input used to set the IMU input invalid
-  nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
+  if (!nh_.hasParam("P_VDC_HardAccelerometerOutlierTH")) 
+    nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
 
   // Squared distance threshold on angular velocity input used to set the IMU input invalid
-  nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
+  if (!nh_.hasParam("P_VDC_HardAngularVelocityOutlierTH")) 
+    nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
 
   // Number of Consecutive hard outliers before changing the State Machine status
-  nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
+  if (!nh_.hasParam("P_VDC_MaxConsecutiveIMUHardOutliers")) 
+    nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
 
   // allows overwrite the acceleration in z (vehicle coordinate frame)
   // with the vertical acceleration from the state estimation
   // Doing this can be necessary due the noise a_z imu measurements
-  nh_.setParam("P_VDC_Overwrite_Acceleration_Z", false);
-  nh_.setParam("P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+  if (!nh_.hasParam("P_VDC_Overwrite_Acceleration_Z"))
+    nh_.setParam("P_VDC_Overwrite_Acceleration_Z", false);
+  
+  if (!nh_.hasParam("P_VDC_InitialBias"))
+    nh_.setParam("P_VDC_InitialBias", std::vector<double>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+
   // post filter for yaw_rate filtering to get a smooth yaw acceleartion signal
-  nh_.setParam("P_VDC_yaw_rate_post_filter_coefficients", std::vector<double>{
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
-    0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01}
-  );
+  
+  if (!nh_.hasParam("P_VDC_yaw_rate_post_filter_coefficients"))
+    nh_.setParam("P_VDC_yaw_rate_post_filter_coefficients", std::vector<double>{
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+      0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01}
+    );
 
   // set the state, input and measurent vector to zero
   x_out_.setZero();

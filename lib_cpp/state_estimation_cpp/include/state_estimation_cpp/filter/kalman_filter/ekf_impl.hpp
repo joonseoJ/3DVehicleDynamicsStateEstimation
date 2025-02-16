@@ -14,32 +14,40 @@ template <typename TConfig> EKF<TConfig>::EKF(ros::NodeHandle nh): KFBase<TConfi
     A_.setZero();
     B_.setZero();
 
-    nh_.setParam("P_VDC_MeasCov", std::vector<double>{
-      0.4, 0.4, 0.4, 0.4, 
-      0.2, 0.1, 0.1, 0.1, 
-      0.04, 0.04, 0.01, 0.01, 
-      0.01, 0.01, 0.05, 0.05, 
-      0.1, 0.1, 0.1, 2.0}
-    );
-    nh_.setParam("P_VDC_InputCov", std::vector<double>{0.00015, 0.5, 1.8});
-    nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
-      2.0, 2.0, 2.0, 2.0, 
-      2.0, 2.0, 2.0, 2.0, 
-      0.3, 0.3, 0.3, 0.3, 
-      0.3, 0.3, 2.0, 1.0, 
-      2.0, 1.0, 2.0, 2.0}
-    );
-    nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
-      3.5, 2.0, 3.5, 2.0, 
-      3.5, 2.0, 3.5, 2.0, 
-      0.3, 0.3, 0.3, 0.3, 
-      0.3, 0.3, 2.0, 1.0, 
-      2.0, 1.0, 2.0, 5.0}
-    );
+    if (!nh_.hasParam("P_VDC_MeasCov")) 
+      nh_.setParam("P_VDC_MeasCov", std::vector<double>{
+        0.4, 0.4, 0.4, 0.4, 
+        0.2, 0.1, 0.1, 0.1, 
+        0.04, 0.04, 0.01, 0.01, 
+        0.01, 0.01, 0.05, 0.05, 
+        0.1, 0.1, 0.1, 2.0}
+      );
+
+    if (!nh_.hasParam("P_VDC_InputCov")) 
+      nh_.setParam("P_VDC_InputCov", std::vector<double>{0.00015, 0.5, 1.8});
+    
+    if (!nh_.hasParam("P_VDC_OutlierBounds")) 
+      nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
+        2.0, 2.0, 2.0, 2.0, 
+        2.0, 2.0, 2.0, 2.0, 
+        0.3, 0.3, 0.3, 0.3, 
+        0.3, 0.3, 2.0, 1.0, 
+        2.0, 1.0, 2.0, 2.0}
+      );
+
+    if (!nh_.hasParam("P_VDC_MahalanobisCovariance")) 
+      nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
+        3.5, 2.0, 3.5, 2.0, 
+        3.5, 2.0, 3.5, 2.0, 
+        0.3, 0.3, 0.3, 0.3, 
+        0.3, 0.3, 2.0, 1.0, 
+        2.0, 1.0, 2.0, 5.0}
+      );
     // Initial guess for the accel and gyro offset
-    nh_.setParam("P_VDC_InitialBias", std::vector<double>{
-      0.0, 0.0, 0.0}
-    );
+    if (!nh_.hasParam("P_VDC_InitialBias")) 
+      nh_.setParam("P_VDC_InitialBias", std::vector<double>{
+        0.0, 0.0, 0.0}
+      );
 
     // set the H_full matrix (this matrix would fuse all measurements)
     // first set the rows that correspond to the localization measurements
@@ -72,32 +80,40 @@ template <typename TConfig> EKF<TConfig>::EKF(ros::NodeHandle nh): KFBase<TConfi
     A_.setZero();
     B_.setZero();
 
-    nh_.setParam("P_VDC_MeasCov", std::vector<double>{
-      0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4,
-      0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.04, 0.1, 0.1, 0.04,
-      0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-      0.1, 2.0, 0.1}
-    );
-    nh_.setParam("P_VDC_InputCov", std::vector<double>{
-      0.00015, 0.00015, 0.00015, 0.5, 1.8, 2.0}
-    );
-    nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
-      2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
-      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
-      2.0, 2.0, 2.0}
-    );
-    nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
-      3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0,
-      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
-      0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
-      2.0, 5.0, 5.0}
-    );
+    if (!nh_.hasParam("P_VDC_MeasCov")) 
+      nh_.setParam("P_VDC_MeasCov", std::vector<double>{
+        0.04, 0.04, 0.04, 0.04, 0.04, 0.04, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4,
+        0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.04, 0.1, 0.1, 0.04,
+        0.1, 0.1, 0.004, 0.1, 0.1, 0.004, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+        0.1, 2.0, 0.1}
+      );
+    
+    if (!nh_.hasParam("P_VDC_InputCov")) 
+      nh_.setParam("P_VDC_InputCov", std::vector<double>{
+        0.00015, 0.00015, 0.00015, 0.5, 1.8, 2.0}
+      );
+
+    if (!nh_.hasParam("P_VDC_OutlierBounds")) 
+      nh_.setParam("P_VDC_OutlierBounds", std::vector<double>{
+        2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
+        0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
+        0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
+        2.0, 2.0, 2.0}
+      );
+
+    if (!nh_.hasParam("P_VDC_MahalanobisCovariance")) 
+      nh_.setParam("P_VDC_MahalanobisCovariance", std::vector<double>{
+        3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0, 3.5, 2.0, 4.0,
+        0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3,
+        0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 2.0, 1.0, 2.0, 2.0, 1.0, 2.0,
+        2.0, 5.0, 5.0}
+      );
 
     // Initial guess for the accel and gyro offset
-    nh_.setParam("P_VDC_InitialBias", std::vector<double>{
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-    );
+    if (!nh_.hasParam("P_VDC_InitialBias")) 
+      nh_.setParam("P_VDC_InitialBias", std::vector<double>{
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+      );
 
     // set the H_full matrix (this matrix would fuse all measurements)
     // first set the rows that correspond to the localization measurements

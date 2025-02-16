@@ -28,30 +28,40 @@ template <typename TConfig> StateEstimation<TConfig>::StateEstimation(
   nh_ = nh;
 
   // Allow the state estimation to initialize its state without a vaild velocity measurement
-  nh_.setParam("P_VDC_InitializeWithVelocity", true);
+  if (!nh_.hasParam("P_VDC_InitializeWithVelocity")) 
+    nh_.setParam("P_VDC_InitializeWithVelocity", true);
 
   // Allow the state estimation to overwrite the state machine if the state covariance
   // for the position is below this threshold
-  nh_.setParam("P_VDC_SafeCovarianceThreshold", 0.5);
+  if (!nh_.hasParam("P_VDC_SafeCovarianceThreshold")) 
+    nh_.setParam("P_VDC_SafeCovarianceThreshold", 0.5);
 
   // Allow the state estimation to fuse the road angles as orientation measurement
-  nh_.setParam("P_VDC_FuseRoadAngles", false);
+  if (!nh_.hasParam("P_VDC_FuseRoadAngles")) 
+    nh_.setParam("P_VDC_FuseRoadAngles", false);
 
   // Allow the state estimation to fuse the reference orientation as orientation measurement
-  nh_.setParam("P_VDC_FuseRefAngles", true);
+  if (!nh_.hasParam("P_VDC_FuseRefAngles")) 
+    nh_.setParam("P_VDC_FuseRefAngles", true);
 
   // Squared distance threshold used to set the linear velocity input invalid
-  nh_.setParam("P_VDC_HardLinearVelocityOutlierTH", 10.0);
+  if (!nh_.hasParam("P_VDC_HardLinearVelocityOutlierTH")) 
+    nh_.setParam("P_VDC_HardLinearVelocityOutlierTH", 10.0);
 
   // Squared distance threshold on acceleration input used to set the IMU input invalid
-  nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
+  if (!nh_.hasParam("P_VDC_HardAccelerometerOutlierTH")) 
+    nh_.setParam("P_VDC_HardAccelerometerOutlierTH", 1000.0);
 
   // Squared distance threshold on angular velocity input used to set the IMU input invalid
-  nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
+  if (!nh_.hasParam("P_VDC_HardAngularVelocityOutlierTH")) 
+    nh_.setParam("P_VDC_HardAngularVelocityOutlierTH", 1.0);
 
   // Number of Consecutive hard outliers before changing the State Machine status
-  nh_.setParam("P_VDC_MaxConsecutiveVelHardOutliers", 250);
-  nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
+  if (!nh_.hasParam("P_VDC_MaxConsecutiveVelHardOutliers")) 
+    nh_.setParam("P_VDC_MaxConsecutiveVelHardOutliers", 250);
+  
+  if (!nh_.hasParam("P_VDC_MaxConsecutiveIMUHardOutliers")) 
+    nh_.setParam("P_VDC_MaxConsecutiveIMUHardOutliers", 50);
 
   // set the input and measurent vector to zero
   u_.setZero();

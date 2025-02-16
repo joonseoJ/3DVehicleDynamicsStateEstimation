@@ -8,10 +8,11 @@ template <typename TConfig> RefOrientationHandler<TConfig>::RefOrientationHandle
 {
   nh_ = nh;
 
-  nh_.setParam("P_VDC_v_dot_filter_coefficients", std::vector<double>{
-    0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
-    0.24522338986219644, 0.07722183762197628}
-  );
+  if (!nh_.hasParam("P_VDC_v_dot_filter_coefficients"))
+    nh_.setParam("P_VDC_v_dot_filter_coefficients", std::vector<double>{
+      0.07722183762197628, 0.24522338986219644, 0.34256086202951863,
+      0.24522338986219644, 0.07722183762197628}
+    );
 }
 
 /**
