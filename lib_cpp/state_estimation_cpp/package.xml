@@ -10,7 +10,6 @@
 
  <depend>roscpp</depend>
 
- <build_depend>param_manager_cpp</build_depend>
  <build_depend>tum_types_cpp</build_depend>
  <build_depend>tum_helpers_cpp</build_depend>
  <build_depend>tum_type_conversions_ros_cpp</build_depend>
@@ -19,7 +18,6 @@
  <build_depend>imu_handler</build_depend>
  <build_depend>classical_filter</build_depend>
 
- <exec_depend>param_manager_cpp</exec_depend>
  <exec_depend>tum_types_cpp</exec_depend>
  <exec_depend>tum_helpers_cpp</exec_depend>
  <exec_depend>tum_type_conversions_ros_cpp</exec_depend>

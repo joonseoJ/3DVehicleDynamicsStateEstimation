@@ -331,7 +331,7 @@ template <class TConfig> Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE>
  UKF<TConfig>::get_virtual_measurement(
    const Eigen::Ref<const Eigen::Vector<double, TConfig::UPDATE_VECTOR_SIZE>> & z)
 {
-  Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE> z_out
+  Eigen::Vector<double, TConfig::VIRTMEAS_VECTOR_SIZE> z_out;
 
   // Calculate virtual Measurement Vector
   // speed at front axle middle point

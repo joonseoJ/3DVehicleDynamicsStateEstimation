@@ -40,9 +40,9 @@ class SSAEstimation : public SSAEstimationBase
 {
 private:
   /**
-   * @brief IAC Parameter Manager Composer to combine the parameters of all subclasses
+   * @brief ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> param_manager_composer_;
+  ros::NodeHandle nh_;
 
   /**
    * @brief State Machine of the Side Slip Angle Estimation
@@ -344,9 +344,9 @@ public:
   /**
    * @brief returns a pointer to the param manager composer
    *
-   * @param[out]                  - std::shared_ptr<tam::interfaces::ParamManagerBase>
+   * @param[out]                  - ros::NodeHandle
    */
-  std::shared_ptr<tam::interfaces::ParamManagerBase> get_param_handler() override;
+  ros::NodeHandle get_param_handler() override;
 
   // output side slip angle estimation
   /**

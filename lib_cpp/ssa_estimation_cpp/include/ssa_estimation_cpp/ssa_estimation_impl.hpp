@@ -7,9 +7,9 @@ template <class TConfig>
 SSAEstimation<TConfig>::SSAEstimation(ros::NodeHandle nh)
 {
   // initialize all subclasses
-  state_machine_ = std::make_unique<tam::core::ssa::StateMachine<TConfig>>();
-  imu_handler_ = std::make_unique<tam::core::state::IMUHandler<TConfig>>();
-  kalman_filter_ = std::make_unique<tam::core::ssa::UKF<TConfig>>();
+  state_machine_ = std::make_unique<tam::core::ssa::StateMachine<TConfig>>(nh);
+  imu_handler_ = std::make_unique<tam::core::state::IMUHandler<TConfig>>(nh);
+  kalman_filter_ = std::make_unique<tam::core::ssa::UKF<TConfig>>(nh);
 
   nh_ = nh;
 
